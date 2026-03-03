@@ -1,0 +1,32 @@
+Scale/Scope/Size of task
+[Large]
+[Big]
+[Medium]
+[Small]
+[Tiny]
+
+Prioity 
+[CRITICAL]
+[IMPORTANT]
+[AVERAGE]
+[LOW]
+[Negliable]
+
+Blocking Progess
+[!BLOCKER!]
+
+Required
+    [Large][CRITICAL] [!BLOCKER!] Build Data Classes Out as per Data_Objects_Rough.yaml
+    [Large][CRITICAL] Create A Person who is our use case and put their CV details into data
+    [Large][CRITICAL] Build LLM test prompts, use earlier boot.dev project for some
+        [Small][CRITICAL] generate system prompt to create a CV based off advert + user's CVObjects
+        [Medium][CRITICAL] Build abstraction of generic to call Gemeni as first test LLM (see earlier boot.dev project)
+        [Medium][Medium] Review other free LLM tooling I could utilize
+            [Medium]
+    [Small][IMPORTANT] Create CV layout templates for the LLM to spit it's data into
+    [Large][CRITICAL] Finish TODO list 
+Nice to Have
+
+Extra Extra Mile
+    Stupid Stuff
+        Have a prompt to make it spit out the worst possible CV using the relevant data. e.g. user has this skill but hates it.

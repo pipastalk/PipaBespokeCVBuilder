@@ -1,0 +1,92 @@
+#Rough planning of data objects and their relationships. This is a starting point and will likely evolve as the build starts
+data_schema:
+    Company:
+        companyName: string
+        industry: string
+        size: int
+        culture: string
+        comment: string # personal notes about the company
+    Person:
+        name: string
+        email: string
+        phoneNumber: string
+        relationType: string
+        comment: string
+        isReference: bool
+    Placement:
+        company_details: Company
+        jobTitle: string
+        startDate: dateTime
+        endDate: dateTime
+        reasonForLeaving: string
+        projectReferences:
+            - Project
+        referenceContacts:
+            - Person
+    Project:
+        projectName: string
+        description: string
+        relatedSkills:
+            - skill: Skill
+        startDate: dateTime
+        endDate: dateTime # also accept ongoing
+    Location:
+        address: string
+        city: string
+        postcode_zipCode: string
+        gpsCoordinates: string
+    AdvertSource:
+        urlOrFilepath: string
+        sourceType: enum # e.g. LinkedIn, Indeed, Company Website
+        comment: string
+    Advert:
+        advertTitle: string
+        advertDescription: string
+        source: AdvertSource
+        companyDetails: Company
+        requirements:
+            - skillName: string
+                proficiencyLevel: string
+        desired:
+            - skillName: string
+                proficiencyLevel: string
+        positionLocation: Location
+        workingPatterns:
+            - dateTime # e.g. Hybrid, Remote, Onsite, Shift, Part-Time, Full-Time
+        contactDetails: ContactDetails
+        advertStyle: enum # e.g. Formal, Informal, Humorous
+    Skill:
+        skillName: string
+        proficiencyLevel: string
+        projectReferences:
+            - Project
+        experienceReferences:
+            - Placement
+        comment: string
+        qualificationReferences:
+            - Qualification
+        enjoyment: string # 1-10, how much do I enjoy this skill
+        tags:
+            - string
+    Qualification:
+        qualificationName: string
+        institution: string
+        grade: string
+        awardingBody: string
+        startDate: dateTime
+        endDate: dateTime
+        relatedSkills:
+            - Skill
+        comment: string
+        tags:
+            - string
+    Hobby:
+        hobbyName: string
+        description: string
+        relatedSkills:
+            - Skill
+        comment: string
+        tags:
+            - string
+        awards:
+            - string # e.g. "Won 1st place in local chess tournament", etc.
