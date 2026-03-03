@@ -16,16 +16,19 @@ Blocking Progess
 [!BLOCKER!]
 
 Required
-    [Large][CRITICAL] [!BLOCKER!] Build Data Classes Out as per Data_Objects_Rough.yaml
-    [Large][CRITICAL] Create A Person who is our use case and put their CV details into data
-    [Large][CRITICAL] Build LLM test prompts, use earlier boot.dev project for some
-        [Small][CRITICAL] generate system prompt to create a CV based off advert + user's CVObjects
-        [Medium][CRITICAL] Build abstraction of generic to call Gemeni as first test LLM (see earlier boot.dev project)
-        [Medium][Medium] Review other free LLM tooling I could utilize
+    [Large] [CRITICAL] [!BLOCKER!] Build Data Classes Out as per Data_Objects_Rough.yaml [COMPLETE]
+    [Large] [CRITICAL] Create A Person who is our use case and put their CV details into data
+    [Large] [CRITICAL] Build LLM test prompts, use earlier boot.dev project for some
+        [Small] [CRITICAL] generate system prompt to create a CV based off advert + user's CVObjects
+        [Medium] [CRITICAL] Build abstraction of generic to call Gemeni as first test LLM (see earlier boot.dev project)
+        [Medium] [Medium] Review other free LLM tooling I could utilize
             [Medium]
-    [Small][IMPORTANT] Create CV layout templates for the LLM to spit it's data into
-    [Large][CRITICAL] Finish TODO list 
-Nice to Have
+    [Small] [IMPORTANT] Create CV layout templates for the LLM to spit it's data into
+    [Large] [CRITICAL] Finish TODO list 
+    [Medium] [IMPORTANT] Review Data Classes in /models/schema.py
+        [Small] [IMPORTANT] Do we need them all?
+        [Small] [IMPORTANT] Would we benefit from additional ones?
+        [Small] [AVERAGE] Should we merge any?
 
 Extra Extra Mile
     Stupid Stuff
