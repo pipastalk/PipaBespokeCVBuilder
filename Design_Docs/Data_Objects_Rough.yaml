@@ -1,0 +1,94 @@
+# Data schema for CVBuilder
+data_schema:
+    Company:
+        company_name: str
+        industry: str
+        size: int
+        culture: str
+        comment: str
+    Person:
+        name: str
+        contact_details: ContactDetails
+        relation_type: str
+        comment: str
+        is_reference: bool
+    Placement:
+        company_details: Company
+        job_title: str
+        start_date: datetime
+        end_date: datetime
+        project_references:
+            - Project
+        reference_contacts:
+            - Person
+        reason_for_leaving: str
+        related_skills:
+            - Skill
+    Project:
+        project_name: str
+        description: str
+        related_skills:
+            - Skill
+        start_date: datetime
+        end_date: datetime
+        comment: str
+    Location:
+        address: str
+        city: str
+        country: str
+        post_or_zip_code: str
+        gps_coordinates: str
+    AdvertSource:
+        source_path: str # url or file path
+        sourced_from: str # e.g. LinkedIn, Company Website
+        comment: str
+    Advert:
+        advert_title: str
+        advert_description: str
+        source: AdvertSource
+        company_details: Company
+        required_skills:
+            - Skill
+        desired_skills:
+            - Skill
+        placement_location: Location
+        working_pattern: str # e.g. remote, hybrid, flex, shifts
+        contact_details: ContactDetails
+        advert_style: str # e.g. formal, informal, creative
+    Skill:
+        skill_name: str
+        proficiency_level: str
+        related_placements: Placement
+        related_projects: Project
+        related_qualifications: Qualification
+        enjoyment_level: int
+        tags:
+            - str
+    Qualification:
+        qualification_name: str
+        studied_at: str
+        grade: str
+        awarded_date: datetime
+        expiration_date: datetime
+        related_skills:
+            - Skill
+        comment: str
+        tags:
+            - str
+    Hobby:
+        hobby_name: str
+        description: str
+        related_skills:
+            - Skill
+        awards_or_acolades:
+            - str
+        tags:
+            - str
+        comment: str
+    ContactDetails:
+        email: str
+        phone_number: str
+        linkedin: str
+        github: str
+        other_links:
+            - str
