@@ -20,7 +20,6 @@ Required
     [Large] [CRITICAL] Create A Person who is our use case and put their CV details into data
     [Large] [CRITICAL] Build LLM test prompts, use earlier boot.dev project for some [ACTIVE]
         [Small] [CRITICAL] generate system prompt to create a CV based off advert + user's CVObjects
-        [Medium] [CRITICAL] Build functions to parse the LLM responses
         [Small] [IMPORTANT] Incorporate a way to push files to the LLM's into the messages / content build functions
         [Medium] [Medium] Review other free LLM tooling I could utilize
     [Small] [CRITICAL] Setup venv [ACTIVE]
@@ -39,3 +38,4 @@ History
     [Large] [CRITICAL] [!BLOCKER!] Build Data Classes Out as per Data_Objects_Rough.yaml [COMPLETE]
     [Medium] [HIGH] Trying out LiteLLM instead of manually building features to post to different LLM's [COMPLETE]
     [Medium] [CRITICAL] Build abstraction of generic to call Gemeni as first test LLM (see earlier boot.dev project) [CANCELLED] liteLLM remotes needs for as much of the custom abstraction.
+    [Medium] [CRITICAL] Build functions to parse the LLM responses[COMPLETE]
