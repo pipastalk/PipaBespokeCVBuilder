@@ -17,7 +17,8 @@ Blocking Progess
 
 Required
     [Small] [CRITICAL] Decide on and add a logging library / standard
-    [Large] [CRITICAL] [!BLOCKER!]Create A Person who is our use case and put their CV details into data [ACTIVE]  
+    [Large] [CRITICAL] [!BLOCKER!]Create A Person who is our use case and put their CV details into data [ACTIVE]
+        [MEDIUM] [CRITICAL] Create tooling to parse yaml into our data types [ACTIVE]
     [Large] [CRITICAL] Build LLM test prompts, use earlier boot.dev project for some 
         [Small] [CRITICAL] generate system prompt to create a CV based off advert + user's CVObjects
         [Small] [IMPORTANT] Incorporate a way to push files to the LLM's into the messages / content build functions
