@@ -2,7 +2,8 @@ LLM builds Data Objects?:
     How early should the LLM trigger on adverts?
     Should it just be a request with the advert document asking it to fill out all the relevant data_objects?
     Do I need the advert put into data_objects at all or can I just have the LLM scan it vs the user's data_objects to build? 
-
+    
 How do I store users?
     atm this intended for a personal use so only 1 user but may as well have user as an object with data under it to call it
-    
+
+Tested liteLLM library/modules https://docs.litellm.ai/ and choosing to use this rather than build multiple llm request/responses manually. 
