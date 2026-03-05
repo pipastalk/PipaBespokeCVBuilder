@@ -16,6 +16,7 @@ Blocking Progess
 [!BLOCKER!]
 
 Required
+    [Small] [CRITICAL] Decide on and add a logging library / standard
     [Large] [CRITICAL] Create A Person who is our use case and put their CV details into data
     [Large] [CRITICAL] Build LLM test prompts, use earlier boot.dev project for some [ACTIVE]
         [Medium] [HIGH] Trying out LiteLLM instead of manually building features to post to different LLM's [ACTIVE]

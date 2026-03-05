@@ -1,0 +1,34 @@
+ModelResponse(
+    id='chatcmpl-c542d76d-f675-4e87-8e5f-05855f5d0f5e',
+    created=1740470510,
+    model='claude-3-7-sonnet-20250219',
+    object='chat.completion',
+    system_fingerprint=None,
+    choices=[
+        Choices(
+            finish_reason='stop',
+            index=0,
+            message=Message(
+                content="The capital of France is Paris.",
+                role='assistant',
+                tool_calls=None,
+                function_call=None,
+                reasoning_content='The capital of France is Paris. This is a very straightforward factual question.'
+            ),
+        )
+    ],
+    usage=Usage(
+        completion_tokens=68,
+        prompt_tokens=42,
+        total_tokens=110,
+        completion_tokens_details=None,
+        prompt_tokens_details=PromptTokensDetailsWrapper(
+            audio_tokens=None,
+            cached_tokens=0,
+            text_tokens=None,
+            image_tokens=None
+        ),
+        cache_creation_input_tokens=0,
+        cache_read_input_tokens=0
+    )
+)
