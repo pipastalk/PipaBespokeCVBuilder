@@ -1,0 +1,3 @@
+https://docs.cloud.google.com/sdk/docs/install-sdk#deb
+apt-get install google-cloud-cli-app-engine-java
+pip install litellm

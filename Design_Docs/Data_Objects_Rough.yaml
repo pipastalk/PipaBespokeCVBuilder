@@ -1,92 +1,94 @@
-#Rough planning of data objects and their relationships. This is a starting point and will likely evolve as the build starts
+# Data schema for CVBuilder
 data_schema:
     Company:
-        companyName: string
-        industry: string
+        company_name: str
+        industry: str
         size: int
-        culture: string
-        comment: string # personal notes about the company
+        culture: str
+        comment: str
     Person:
-        name: string
-        email: string
-        phoneNumber: string
-        relationType: string
-        comment: string
-        isReference: bool
+        name: str
+        contact_details: ContactDetails
+        relation_type: str
+        comment: str
+        is_reference: bool
     Placement:
         company_details: Company
-        jobTitle: string
-        startDate: dateTime
-        endDate: dateTime
-        reasonForLeaving: string
-        projectReferences:
+        job_title: str
+        start_date: datetime
+        end_date: datetime
+        project_references:
             - Project
-        referenceContacts:
+        reference_contacts:
             - Person
+        reason_for_leaving: str
+        related_skills:
+            - Skill
     Project:
-        projectName: string
-        description: string
-        relatedSkills:
-            - skill: Skill
-        startDate: dateTime
-        endDate: dateTime # also accept ongoing
+        project_name: str
+        description: str
+        related_skills:
+            - Skill
+        start_date: datetime
+        end_date: datetime
+        comment: str
     Location:
-        address: string
-        city: string
-        postcode_zipCode: string
-        gpsCoordinates: string
+        address: str
+        city: str
+        country: str
+        post_or_zip_code: str
+        gps_coordinates: str
     AdvertSource:
-        urlOrFilepath: string
-        sourceType: enum # e.g. LinkedIn, Indeed, Company Website
-        comment: string
+        source_path: str # url or file path
+        sourced_from: str # e.g. LinkedIn, Company Website
+        comment: str
     Advert:
-        advertTitle: string
-        advertDescription: string
+        advert_title: str
+        advert_description: str
         source: AdvertSource
-        companyDetails: Company
-        requirements:
-            - skillName: string
-                proficiencyLevel: string
-        desired:
-            - skillName: string
-                proficiencyLevel: string
-        positionLocation: Location
-        workingPatterns:
-            - dateTime # e.g. Hybrid, Remote, Onsite, Shift, Part-Time, Full-Time
-        contactDetails: ContactDetails
-        advertStyle: enum # e.g. Formal, Informal, Humorous
+        company_details: Company
+        required_skills:
+            - Skill
+        desired_skills:
+            - Skill
+        placement_location: Location
+        working_pattern: str # e.g. remote, hybrid, flex, shifts
+        contact_details: ContactDetails
+        advert_style: str # e.g. formal, informal, creative
     Skill:
-        skillName: string
-        proficiencyLevel: string
-        projectReferences:
-            - Project
-        experienceReferences:
-            - Placement
-        comment: string
-        qualificationReferences:
-            - Qualification
-        enjoyment: string # 1-10, how much do I enjoy this skill
+        skill_name: str
+        proficiency_level: str
+        related_placements: Placement
+        related_projects: Project
+        related_qualifications: Qualification
+        enjoyment_level: int
         tags:
-            - string
+            - str
     Qualification:
-        qualificationName: string
-        institution: string
-        grade: string
-        awardingBody: string
-        startDate: dateTime
-        endDate: dateTime
-        relatedSkills:
+        qualification_name: str
+        studied_at: str
+        grade: str
+        awarded_date: datetime
+        expiration_date: datetime
+        related_skills:
             - Skill
-        comment: string
+        comment: str
         tags:
-            - string
+            - str
     Hobby:
-        hobbyName: string
-        description: string
-        relatedSkills:
+        hobby_name: str
+        description: str
+        related_skills:
             - Skill
-        comment: string
+        awards_or_acolades:
+            - str
         tags:
-            - string
-        awards:
-            - string # e.g. "Won 1st place in local chess tournament", etc.
+            - str
+        comment: str
+    ContactDetails:
+        email: str
+        phone_number: str
+        linkedin: str
+        github: str
+        other_links:
+            - str
