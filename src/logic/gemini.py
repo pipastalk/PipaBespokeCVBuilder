@@ -36,15 +36,23 @@ class GeminiLLM:
                 raise ValueError("The provided source path does not exist")
             contents["file_paths"].append(file_input)
         return contents
-    
-gemini = GeminiLLM()
-content_struct = gemini.build_contents(
-    text_input="count to 5 and then stop",
-    file_input=None
-)
-response = gemini.request_response(
-    model_name = supportedModels.Gemini,
-    access_role = llmRole.USER,
-    content_struct = content_struct
-)
-print(response)
+    def get_reply_from_response(self, response):
+        reply = response.choices[0].message.content
+        return reply
+
+
+def test_gemini():        
+    gemini = GeminiLLM()
+    content_struct = gemini.build_contents(
+        text_input="count to 5 and then stop",
+        file_input=None
+    )
+    response = gemini.request_response(
+        model_name = supportedModels.Gemini,
+        access_role = llmRole.USER,
+        content_struct = content_struct
+    )
+    reply = gemini.get_reply_from_response(response)
+    print("Gemini's reply: ", reply)
+if __name__ == "__main__":
+    test_gemini()
