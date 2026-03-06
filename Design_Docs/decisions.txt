@@ -7,3 +7,36 @@ How do I store users?
     atm this intended for a personal use so only 1 user but may as well have user as an object with data under it to call it
 
 Tested liteLLM library/modules https://docs.litellm.ai/ and choosing to use this rather than build multiple llm request/responses manually. 
+
+Having a think about the LLM queries and researching how would be best to reduce token use and still get valid responses
+
+1. Parse job advert (PDF/webpage) -> extract text
+        |
+        v
+2. Inject: job advert text + all skills
+   Prompt: "Return skills from the list relevant to this job"
+        |
+        v
+3. Fetch projects & placements tagged with returned skills
+        |
+        v
+4. Inject: job advert + fetched data
+   Prompt: "Write tailored blurbs for each, prioritise X entries"
+        For each recommended project and placement, return:
+            - name
+            - tailored_blurb (2-3 sentences, referencing the job requirements)
+            - relevant_skills (list)
+         Return as a YAML array.
+        |
+        v
+5. Return structured response (JSON or markdown)
+        |
+        v
+6. App Parse response, select template, input blurbs and titles into template
+
+
+Future tech
+python-docx 
+        use to build docx files from the output
+pydantic
+        template layout
