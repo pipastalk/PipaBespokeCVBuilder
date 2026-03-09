@@ -13,9 +13,9 @@ class Company:
 @dataclass
 class Skill:
     skill_name: str
-    proficiency_level: str
-    enjoyment_level: int # how much do I enjoy this skill, could do with better name
-    tags: list[str]
+    proficiency_level: Optional[str]
+    enjoyment_level: Optional[int] # how much do I enjoy this skill, could do with better name
+    tags: Optional[list[str]]
     related_placements: Optional[list["Placement"]]
     related_projects: Optional[list["Project"]]
     related_qualifications: Optional[list["Qualification"]]
@@ -48,13 +48,13 @@ class Person:
 class Project:
     project_name: str
     description: str
-    start_date: datetime
-    end_date: datetime
+    start_date: Optional[datetime]
+    end_date: Optional[datetime]
     related_skills: Optional[list["Skill"]]
     comment: Optional[str]
 @dataclass
 class Placement:
-    company_details: Company
+    company_name: Company
     job_title: str
     start_date: datetime
     end_date: datetime
@@ -86,7 +86,6 @@ class Advert:
     working_pattern: str #maybe could enum this later, remote,hybrid,flex,shifts etc
     contact_details: ContactDetails
     advertStyle: Enum #e.g. formal, informal, creative, etc. 
-
 @dataclass
 class Hobby:
     hobby_name: str
