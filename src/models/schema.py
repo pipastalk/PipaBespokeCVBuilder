@@ -4,13 +4,6 @@ from enum import Enum
 from typing import Optional
 
 @dataclass
-class Company:
-    company_name: str
-    industry: str
-    size: int
-    culture: Optional[str]
-    comment: Optional[str] # personal notes about the company
-@dataclass
 class Skill:
     skill_name: str
     proficiency_level: Optional[str]

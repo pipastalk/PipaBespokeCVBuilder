@@ -16,25 +16,26 @@ Blocking Progess
 [!BLOCKER!]
 
 Required
-    [Small] [CRITICAL] Decide on and add a logging library / standard
-    [Large] [CRITICAL] [!BLOCKER!]Create A Person who is our use case and put their CV details into data [ACTIVE]
-        [MEDIUM] [CRITICAL] Create tooling to parse yaml into our data types [ACTIVE]
+    [Small] [CRITICAL] Decide on and add a logging library / standard [ACTIVE]
+    [Small] [CRITICAL] Create data_injestion for advert, advert_source and locations
     [Large] [CRITICAL] Build LLM test prompts, use earlier boot.dev project for some 
         [Small] [CRITICAL] generate system prompt to create a CV based off advert + user's CVObjects
         [Small] [IMPORTANT] Incorporate a way to push files to the LLM's into the messages / content build functions
         [Medium] [Medium] Review other free LLM tooling I could utilize
+    [Small] [MEDIUM] Refactor parts of data_injestion and associated yaml filesto use generic parsing and validating rather than individual
     [Small] [IMPORTANT] Create CV layout templates for the LLM to spit it's data into
     [Large] [CRITICAL] Finish TODO list 
     [Medium] [IMPORTANT] Review Data Classes in /models/schema.py
         [Small] [IMPORTANT] Do we need them all?
         [Small] [IMPORTANT] Would we benefit from additional ones?
         [Small] [AVERAGE] Should we merge any?
-
 Extra Extra Mile
     Stupid Stuff
         Have a prompt to make it spit out the worst possible CV using the relevant data. e.g. user has this skill but hates it.
 
 History
+    [Large] [CRITICAL] [!BLOCKER!]Create A Person who is our use case and put their CV details into data [COMPLETE]
+    [MEDIUM] [CRITICAL] Create initial tooling to parse yaml into our data types [COMPLETE]
     [Large] [CRITICAL] [!BLOCKER!] Build Data Classes Out as per Data_Objects_Rough.yaml [COMPLETE]
     [Medium] [HIGH] Trying out LiteLLM instead of manually building features to post to different LLM's [COMPLETE]
     [Medium] [CRITICAL] Build abstraction of generic to call Gemeni as first test LLM (see earlier boot.dev project) [CANCELLED] liteLLM remotes needs for as much of the custom abstraction.

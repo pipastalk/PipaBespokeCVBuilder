@@ -8,6 +8,11 @@ How do I store users?
 
 Tested liteLLM library/modules https://docs.litellm.ai/ and choosing to use this rather than build multiple llm request/responses manually. 
 
+
+
+
+
+
 Having a think about the LLM queries and researching how would be best to reduce token use and still get valid responses
 
 1. Parse job advert (PDF/webpage) -> extract text

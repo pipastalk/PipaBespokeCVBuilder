@@ -6,7 +6,6 @@ from schema import *
 
 #region generic tools
 class dataclass_type(Enum):
-    COMPANY = "Company"
     SKILL = "Skill"
     QUALIFICATION = "Qualification"
     CONTACT_DETAILS = "ContactDetails"
@@ -27,36 +26,25 @@ def read_yaml_file(file_path):
 
 def validate_data(data, dataclass_type):
     validated_data = {}
-    working_data = None
+    working_data = data # can be overwritten by switch case if needed
     match dataclass_type:
-        case dataclass_type.COMPANY:
-            working_data = data
-            required_fields = ['company_name', 'size']
         case dataclass_type.PERSON:
-            working_data = data
             required_fields = ['name', 'relation_type', 'is_reference']
         case dataclass_type.PLACEMENT:
-            working_data = data['company']
             required_fields = ['name', 'start_date', 'job_title', 'related_skills']
         case dataclass_type.PROJECT:
-            working_data = data
             required_fields = ['name', 'description']
         case dataclass_type.LOCATION:
-            working_data = data['location']
             required_fields = ['city', 'country']
         # TODO impliment case dataclass_type.ADVERTSOURCE:
-        #TODO impliment case dataclass_type.ADVERT:
+        # TODO impliment case dataclass_type.ADVERT:
         case dataclass_type.SKILL:
-            working_data = data['skill']
             required_fields = ['skill_name']
         case dataclass_type.QUALIFICATION:
-            working_data = data
             required_fields = ['qualification_name', 'institution', 'date_obtained', 'related_skills']
         case dataclass_type.HOBBY:
-            working_data = data
             required_fields = ['hobby_name', 'description', 'related_skills']
         case dataclass_type.CONTACT_DETAILS:
-            working_data = data
             required_fields = ['email']
         case _:
             raise ValueError("Invalid dataclass type provided for validation")
@@ -103,8 +91,6 @@ def parse_data(file_path, data_type: dataclass_type):
     build = None
     finished_data = []
     match data_type:
-        case dataclass_type.COMPANY:
-            build = build_company
         case dataclass_type.PERSON:
             build = build_person
         case dataclass_type.PLACEMENT:
