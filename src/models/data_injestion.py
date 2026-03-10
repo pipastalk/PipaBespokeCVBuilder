@@ -1,9 +1,17 @@
 import os
 import yaml
+import logging
 from enum import Enum
 from datetime import datetime
 from schema import *
-
+#region logging setup
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+data_injest_file_log = logging.FileHandler("data/logs/data_ingestion.log")
+logformat = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+data_injest_file_log.setFormatter(logformat)
+logger.addHandler(data_injest_file_log)
+#endregion
 #region generic tools
 class dataclass_type(Enum):
     SKILL = "Skill"
@@ -110,7 +118,7 @@ def parse_data(file_path, data_type: dataclass_type):
     
     file_data = read_yaml_file(file_path)
     for entry in file_data:
-        print(f"{data_type.value} Name: {entry}")
+        logger.info(f"Parsing {data_type.value} entry: {entry}")
         if not entry:
             raise ValueError(f"Empty entry found in {data_type.value} file, please ensure all entries have data. .yaml files should not end in ---")
         validated_data = validate_data(entry, data_type)
@@ -130,7 +138,7 @@ def parse_placements(file_path):
     placements = []
     file_data = read_yaml_file(file_path)
     for placement in file_data:
-        print(f"Placement Names {placement['company']['name']}")
+        logger.info(f"Parsing placement entry: {placement['company']['name']}")
         validated_placement = validate_placement_data(placement)
         finished_placement = build_placement(validated_placement)
         placements.append(finished_placement)
@@ -195,7 +203,7 @@ def parse_skills(file_path):
     skills = []
     file_data = read_yaml_file(file_path)
     for skill in file_data:
-        print(f"Skill Name: {skill['skill']['skill_name']}")
+        logger.info(f"Parsing skill entry: {skill['skill']['skill_name']}")
         validated_skill = validate_skill_data(skill)
         finished_skill = build_skill(validated_skill)
         skills.append(finished_skill)
@@ -233,7 +241,7 @@ def parse_projects(file_path):
     projects = []
     file_data = read_yaml_file(file_path)
     for project in file_data:
-        print(f"Project Name: {project['project_name']}")
+        logger.info(f"Parsing project entry: {project['project_name']}")
         validated_project = validate_data(project, dataclass_type.PROJECT)
         finished_project = build_project(validated_project)
         projects.append(finished_project)
@@ -258,7 +266,6 @@ def parse_hobbies(file_path):
     finished_data = None
     file_data = read_yaml_file(file_path)
     for entry in file_data:
-        print(f"{data_type.value} Name: {entry}")
         validated_data = validate_data(entry, data_type)
         finished_data = build_hobby(validated_data)
         data.append(finished_data)

@@ -47,7 +47,7 @@ class Project:
     comment: Optional[str]
 @dataclass
 class Placement:
-    company_name: Company
+    company_name: str
     job_title: str
     start_date: datetime
     end_date: datetime
@@ -72,7 +72,6 @@ class Advert:
     advert_title: str
     advert_description: str
     source: AdvertSource
-    companyDetails: Company
     required_skills: list["Skill"]
     desired_skills: list["Skill"]
     placement_location: Location
