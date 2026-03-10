@@ -8,10 +8,10 @@ data_schema:
         comment: str
     Person:
         name: str
-        contact_details: ContactDetails
         relation_type: str
         comment: str
         is_reference: bool
+        contact_details: ContactDetails
     Placement:
         company_details: Company
         job_title: str

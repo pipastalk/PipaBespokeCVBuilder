@@ -1,0 +1,151 @@
+%YAML 1.2
+---
+qualification_name: Bachelor of Science in Computer Science
+studied_at: University of Example
+grade: First Class Honours
+awarded_date: 2023-06-15
+expiration_date: null
+related_skills:
+  - Programming
+  - Data Structures
+  - Algorithms
+comment: "Focused on software development and machine learning modules."
+tags:
+  - Education
+  - Computer Science
+  - Degree
+---
+qualification_name: General Certificate of Secondary Education (GCSE) - Mathematics
+studied_at: Example High School
+grade: A*
+awarded_date: 2017-08-20
+expiration_date: null
+related_skills:
+  - Numeracy
+  - Problem Solving
+  - Logical Reasoning
+comment: "Achieved top grade in national exams."
+tags:
+  - Education
+  - Mathematics
+  - School
+---
+qualification_name: A-Level Physics
+studied_at: Example Sixth Form College
+grade: A
+awarded_date: 2019-08-15
+expiration_date: null
+related_skills:
+  - Analytical Thinking
+  - Experimentation
+  - Scientific Method
+comment: "Completed advanced coursework and laboratory projects."
+tags:
+  - Education
+  - Physics
+  - College
+---
+qualification_name: AWS Certified Solutions Architect – Associate
+studied_at: Amazon Web Services
+grade: Pass
+awarded_date: 2025-03-10
+expiration_date: 2028-03-10
+related_skills:
+  - Cloud Computing
+  - Solution Architecture
+  - AWS Services
+comment: "Validated ability to design and deploy scalable systems on AWS."
+tags:
+  - Certification
+  - Cloud
+  - Vendor
+---
+qualification_name: Cisco Certified Network Associate (CCNA)
+studied_at: Cisco
+grade: Pass
+awarded_date: 2024-11-01
+expiration_date: 2027-11-01
+related_skills:
+  - Networking
+  - Troubleshooting
+  - Security
+comment: "Demonstrated knowledge of networking fundamentals and security."
+tags:
+  - Certification
+  - Networking
+  - Vendor
+---
+qualification_name: Professional Scrum Master I (PSM I)
+studied_at: Scrum.org
+grade: Pass
+awarded_date: 2022-05-12
+expiration_date: null
+related_skills:
+  - Agile Methodologies
+  - Team Leadership
+  - Project Management
+comment: "Certified in Scrum practices and agile project delivery."
+tags:
+  - Certification
+  - Agile
+  - Professional
+---
+qualification_name: Google IT Support Professional Certificate
+studied_at: Coursera
+grade: Pass
+awarded_date: 2021-09-30
+expiration_date: null
+related_skills:
+  - IT Support
+  - Troubleshooting
+  - Customer Service
+# No comment, no tags
+---
+qualification_name: First Aid at Work
+studied_at: Red Cross
+grade: Pass
+awarded_date: 2020-04-15
+expiration_date: 2023-04-15
+related_skills:
+  - Emergency Response
+  - Communication
+# No tags, no comment
+---
+qualification_name: Diploma in Graphic Design
+studied_at: Example College of Art
+grade: Distinction
+awarded_date: 2022-07-01
+expiration_date: null
+related_skills:
+  - Design
+  - Creativity
+  - Digital Tools
+tags:
+  - Art
+  - Design
+# No comment
+---
+qualification_name: "Microsoft Certified: Azure Fundamentals"
+studied_at: Microsoft
+grade: Pass
+awarded_date: 2023-02-10
+expiration_date: 2026-02-10
+related_skills:
+  - Cloud Computing
+  - Azure
+  - Fundamentals
+comment: "Entry-level certification for cloud basics."
+# No tags
+---
+qualification_name: High School Diploma
+studied_at: Example High School
+grade: Merit
+awarded_date: 2018-06-20
+expiration_date: null
+related_skills:
+  - General Education
+  - Study Skills
+tags:
+  - School
+  - Diploma
+# No comment

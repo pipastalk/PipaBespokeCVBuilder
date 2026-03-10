@@ -1,0 +1,51 @@
+#    name: str
+#    relation_type: str
+#    is_reference: bool
+#    contact_details: ContactDetails
+#    comment: Optional[str]
+
+%YAML 1.2
+---
+name: Dr. Emily Carter
+relation_type: Academic Advisor
+is_reference: true
+contact_details:
+    name: Dr. Emily Carter
+    email: email@email.com
+comment: "Provided guidance during my undergraduate studies and can speak to my academic performance and research skills."
+
+---
+name: Mr. Alan Smith
+relation_type: Former Manager
+is_reference: true
+contact_details:
+    name: Alan Smith
+    email: alan.smith@company.com
+# No comment
+
+---
+name: Ms. Priya Patel
+relation_type: Colleague
+is_reference: false
+contact_details:
+    name: Priya Patel
+    email: priya.patel@workplace.com
+# No comment
+
+---
+name: Mrs. Linda Green
+relation_type: Mentor
+is_reference: true
+contact_details:
+    name: Linda Green
+    email: linda.green@mentors.org
+comment: "Mentored me during my first internship."
+
+---
+name: Dr. Michael Brown
+relation_type: Research Collaborator
+is_reference: false
+contact_details:
+    name: Michael Brown
+    email: mbrown@university.edu
+# No comment

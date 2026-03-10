@@ -6,9 +6,17 @@ from schema import *
 
 #region generic tools
 class dataclass_type(Enum):
+    COMPANY = "Company"
     SKILL = "Skill"
+    QUALIFICATION = "Qualification"
+    CONTACT_DETAILS = "ContactDetails"
+    PERSON = "Person"
     PROJECT = "Project"
     PLACEMENT = "Placement"
+    LOCATION = "Location"
+    ADVERTSOURCE = "AdvertSource"
+    ADVERT = "Advert"
+    HOBBY = "Hobby"
 
 def read_yaml_file(file_path):
     if not os.path.exists(file_path):
@@ -21,15 +29,35 @@ def validate_data(data, dataclass_type):
     validated_data = {}
     working_data = None
     match dataclass_type:
-        case dataclass_type.SKILL:
-            working_data = data['skill']
-            required_fields = ['skill_name']
-        case dataclass_type.PROJECT:
+        case dataclass_type.COMPANY:
             working_data = data
-            required_fields = ['name', 'description']
+            required_fields = ['company_name', 'size']
+        case dataclass_type.PERSON:
+            working_data = data
+            required_fields = ['name', 'relation_type', 'is_reference']
         case dataclass_type.PLACEMENT:
             working_data = data['company']
             required_fields = ['name', 'start_date', 'job_title', 'related_skills']
+        case dataclass_type.PROJECT:
+            working_data = data
+            required_fields = ['name', 'description']
+        case dataclass_type.LOCATION:
+            working_data = data['location']
+            required_fields = ['city', 'country']
+        # TODO impliment case dataclass_type.ADVERTSOURCE:
+        #TODO impliment case dataclass_type.ADVERT:
+        case dataclass_type.SKILL:
+            working_data = data['skill']
+            required_fields = ['skill_name']
+        case dataclass_type.QUALIFICATION:
+            working_data = data
+            required_fields = ['qualification_name', 'institution', 'date_obtained', 'related_skills']
+        case dataclass_type.HOBBY:
+            working_data = data
+            required_fields = ['hobby_name', 'description', 'related_skills']
+        case dataclass_type.CONTACT_DETAILS:
+            working_data = data
+            required_fields = ['email']
         case _:
             raise ValueError("Invalid dataclass type provided for validation")
 
@@ -37,7 +65,7 @@ def validate_data(data, dataclass_type):
         raise ValueError("Placement was invalid, expected company as base field")
     for field in working_data:
         if field in required_fields:
-            if not working_data[field]:
+            if not working_data[field] and (not isinstance(working_data[field], bool)): #to allow boolean false values to be valid
                 raise ValueError(f"No {field} in placement company")
         if field == "start_date":
             try:
@@ -70,6 +98,45 @@ def validate_data(data, dataclass_type):
         validated_data[field] = working_data[field]
     return validated_data
 
+def parse_data(file_path, data_type: dataclass_type):
+    #TODO correct yaml data to be uniform so no placement['company'] / skill difference in data then convert parses into using this shared helper.
+    build = None
+    finished_data = []
+    match data_type:
+        case dataclass_type.COMPANY:
+            build = build_company
+        case dataclass_type.PERSON:
+            build = build_person
+        case dataclass_type.PLACEMENT:
+            build = build_placement
+        case dataclass_type.PROJECT:
+            build = build_project
+        #TODO case dataclass_type.LOCATION:          pass
+        #TODO case dataclass_type.ADVERTSOURCE:       pass
+        #TODO case dataclass_type.ADVERT:             pass
+        case dataclass_type.SKILL:
+            build = build_skill
+        case dataclass_type.QUALIFICATION:
+            build = build_qualification
+        case dataclass_type.HOBBY:            pass
+        case _:
+            raise ValueError("Invalid dataclass type provided for parsing")
+    
+    file_data = read_yaml_file(file_path)
+    for entry in file_data:
+        print(f"{data_type.value} Name: {entry}")
+        if not entry:
+            raise ValueError(f"Empty entry found in {data_type.value} file, please ensure all entries have data. .yaml files should not end in ---")
+        validated_data = validate_data(entry, data_type)
+        if build:
+            finished_entry = build(validated_data)
+            finished_data.append(finished_entry)
+        else:
+            raise NotImplementedError(f"No build function implemented for {data_type.value}")
+        
+    if not finished_data:
+         raise ValueError(f"No valid {data_type.value} entries found in file")
+    return finished_data
 #endregion
 
 #region placements tools
@@ -136,6 +203,7 @@ def build_placement(validated_placement):
     )
     return placement
 #endregion
+
 #region skills tools
 def parse_skills(file_path):
     skills = []
@@ -197,6 +265,83 @@ def build_project(validated_project):
     return project
 #endregion
 
+#region hobby tools
+def parse_hobbies(file_path):
+    data_type = dataclass_type.HOBBY
+    data = []
+    finished_data = None
+    file_data = read_yaml_file(file_path)
+    for entry in file_data:
+        print(f"{data_type.value} Name: {entry}")
+        validated_data = validate_data(entry, data_type)
+        finished_data = build_hobby(validated_data)
+        data.append(finished_data)
+    if not finished_data:
+         raise ValueError(f"No valid {data_type.value} entries found in file")
+    return finished_data
+def build_hobby(validated_hobby):
+    hobby = Hobby(
+        hobby_name=validated_hobby['hobby_name'],
+        description=validated_hobby['description'],
+        related_skills=validated_hobby['related_skills'],
+        tags=validated_hobby['tags'] if 'tags' in validated_hobby else None,
+        awards_or_acolades=validated_hobby['awards_or_acolades'] if 'awards_or_acolades' in validated_hobby else None,
+        comment=validated_hobby['comment'] if 'comment' in validated_hobby else None,
+    )
+    return hobby
+#endregion
+
+#region qualification tools
+def parse_qualifications(file_path):
+    return parse_data(file_path, dataclass_type.QUALIFICATION)
+    
+def build_qualification(validated_qualification):
+    qualification = Qualification(
+        qualification_name=validated_qualification['qualification_name'],
+        studied_at=validated_qualification['studied_at'],
+        awarded_date=validated_qualification['awarded_date'],
+        grade = validated_qualification['grade'],
+        related_skills=validated_qualification['related_skills'],
+        tags=validated_qualification['tags'] if 'tags' in validated_qualification else [],
+        expiration_date=validated_qualification['expiration_date'] if 'expiration_date' in validated_qualification else None,
+        comment=validated_qualification['comment'] if 'comment' in validated_qualification else None,
+    )
+    return qualification
+#endregion
+
+#region people tools
+def parse_people(file_path):
+    return parse_data(file_path, dataclass_type.PERSON)
+
+def build_person(validated_person): #Validates and builds contact details within Person.
+    validated_contact_data = validate_data(validated_person['contact_details'], dataclass_type.CONTACT_DETAILS)
+    person = Person(
+        name=validated_person['name'],
+        relation_type=validated_person['relation_type'],
+        is_reference=validated_person['is_reference'],
+        contact_details=build_contact_details(validated_contact_data),
+        comment=validated_person['comment'] if 'comment' in validated_person else None,
+    )
+    return person
+#endregion
+
+#region contactdetails tools
+#contact details doesn't parse as they are provided within other dataclasses
+def build_contact_details(validated_contact_details):
+    contact_details = ContactDetails(
+        name=validated_contact_details['name'],
+        email=validated_contact_details['email'] if 'email' in validated_contact_details else None,
+        phone_number=validated_contact_details['phone_number'] if 'phone_number' in validated_contact_details else None,
+        linkedin=validated_contact_details['linkedin'] if 'linkedin' in validated_contact_details else None,
+        github=validated_contact_details['github'] if 'github' in validated_contact_details else None,
+        other_links=validated_contact_details['other_links'] if 'other_links' in validated_contact_details else None,
+    )
+    return contact_details
+#endregion
+
 parse_placements("data/CV_Resources/Personal/placements.yaml")
 parse_skills("data/CV_Resources/Personal/skills.yaml")
 parse_projects("data/CV_Resources/Personal/projects.yaml")
+parse_hobbies("data/CV_Resources/AI_Example_data/hobbies.yaml")
+parse_qualifications("data/CV_Resources/AI_Example_data/qualifications.yaml")
+parse_people("data/CV_Resources/AI_Example_data/people.yaml")

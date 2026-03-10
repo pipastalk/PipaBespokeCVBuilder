@@ -40,10 +40,10 @@ class ContactDetails:
 @dataclass
 class Person:
     name: str
-    contact_details: ContactDetails
     relation_type: str
+    is_reference: bool
+    contact_details: ContactDetails
     comment: Optional[str]
-    is_reference: Optional[bool]
 @dataclass
 class Project:
     project_name: str
@@ -90,7 +90,7 @@ class Advert:
 class Hobby:
     hobby_name: str
     description: str
-    tags: list[str]
-    related_skills: Optional[list["Skill"]]
+    related_skills: list["Skill"]
+    tags: Optional[list[str]]
     awards_or_acolades: Optional[list[str]]
     comment: Optional[str]
