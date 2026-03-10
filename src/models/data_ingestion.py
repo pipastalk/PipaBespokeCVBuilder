@@ -1,3 +1,5 @@
+import json #only used for CAI hasing as of 2026-03-10
+import hashlib
 import os
 import random
 import yaml
@@ -41,23 +43,28 @@ def validate_data(data, dataclass_type, user):
     date_fields = ['start_date', 'end_date', 'awarded_date', 'expiration_date']
     match dataclass_type:
         case dataclass_type.SKILL:
-            required_fields = ['skill_name']
+            required_fields = ['skill_name','cai_hash']
+            working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.QUALIFICATION:
-            required_fields = ['qualification_name', 'studied_at', 'awarded_date', 'related_skills']
+            required_fields = ['qualification_name', 'studied_at', 'awarded_date', 'related_skills','cai_hash']
+            working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.CONTACT_DETAILS:
             required_fields = ['name']
         case dataclass_type.PERSON:
             required_fields = ['name', 'relation_type', 'is_reference']
         case dataclass_type.PROJECT:
-            required_fields = ['name', 'description']
+            required_fields = ['project_name', 'description','cai_hash']
+            working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.PLACEMENT:
-            required_fields = ['name', 'job_title', 'start_date', 'related_skills']
+            required_fields = ['company_name', 'job_title', 'start_date', 'related_skills','cai_hash']
+            working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.LOCATION:
             required_fields = ['city', 'country']
         # TODO impliment case dataclass_type.ADVERTSOURCE:
         # TODO impliment case dataclass_type.ADVERT:
         case dataclass_type.HOBBY:
-            required_fields = ['hobby_name', 'description']
+            required_fields = ['hobby_name', 'description','cai_hash']
+            working_data['cai_hash'] = build_cai_hash(data)
         case _:
             raise ValueError("Invalid dataclass type provided for validation")
 
@@ -85,28 +92,38 @@ def validate_data(data, dataclass_type, user):
     return validated_data
 
 def link_skills(skill_data_list, dataclass_type, user: User):
-    related_skillset = [] 
+    related_skillset = {}
     #create skills if they do not exist, if they exist or not will always append to the skillset which is to later be added to relevent related_skills dicts
     for entry in skill_data_list:
-        if entry not in user.skills: #TODO does this prevent duplicates with different slugs?
+        new_cai = build_cai_hash(entry)
+        if len(user.skills) == 0: #always add if empty dict
+            new_skill = build_skill(validate_data(entry, dataclass_type.SKILL, user), user)
+            user.skills[new_skill.skill_id] = new_skill
+            related_skillset[new_skill.skill_id] = new_skill.skill_id
+            continue
+        existing_skills = []
+        for k, skill in user.skills.items():
+            existing_skills.append(skill.cai_hash)    
+        if new_cai not in existing_skills:
             #validates, builds, then adds to skills list
             new_skill = build_skill(validate_data(entry, dataclass_type.SKILL, user), user)
-            user.skills.append(new_skill)
+            user.skills[new_skill.skill_id] = new_skill
         else:
+            new_skill = user.skills[entry.skill_id]
             user.skills[entry.skill_id]
-        related_skillset.append(new_skill[skill_id])
-        
+        related_skillset[new_skill.skill_id] = new_skill.skill_id
+
     registry_config = {
         dataclass_type.PLACEMENT: {"id_field":'placement_id', "target_dict": user.placements},
         dataclass_type.PROJECT: {"id_field":'project_id', "target_dict": user.projects},
         dataclass_type.QUALIFICATION: {"id_field":'qualification_id', "target_dict": user.qualifications},
         dataclass_type.HOBBY: {"id_field":'hobby_id', "target_dict": user.hobbies},
     }
-    id_field = registry_config.get(dataclass_type).get("id_field")
-    tar_dict = registry_config.get(dataclass_type).get("target_dict")
+    id_field = registry_config[dataclass_type]['id_field']
+    tar_dict = registry_config[dataclass_type]['target_dict']
     for skill_id in related_skillset:
         if id_field not in tar_dict:
-            tar_dict['related_skills'][skill_id] = skill.name
+            tar_dict['related_skills'][skill_id] = user.skills[skill_id].skill_id
 
 def convert_date(date_field):
     if not date_field:
@@ -120,7 +137,7 @@ def convert_date(date_field):
             raise ValueError(f"date entered as a string with invalid date format, expected DD-MM-YYYY")
     return date_field
 
-def parse_data(file_path, data_type: dataclass_type):
+def parse_data(file_path, data_type: dataclass_type, user: User):
     #TODO correct yaml data to be uniform so no placement['company'] / skill difference in data then convert parses into using this shared helper.
     build = None
     finished_data = []
@@ -150,9 +167,9 @@ def parse_data(file_path, data_type: dataclass_type):
             raise ValueError(f"Empty entry found in {data_type.value} file, please ensure all entries have data. .yaml files should not end in ---")
         
         
-        validated_data = validate_data(entry, data_type)
+        validated_data = validate_data(entry, data_type, user)
         if build:
-            finished_entry = build(validated_data)
+            finished_entry = build(validated_data, user)
             finished_data.append(finished_entry)
         else:
             raise NotImplementedError(f"No build function implemented for {data_type.value}")
@@ -174,34 +191,47 @@ def generate_id(name: str, dataclass_type: dataclass_type, user: User):
     attempts = 0
     if dataclass_type == dataclass_type.PERSON:
         id = str(uuid.uuid4())[:8] # Generates a short unique hex string
-        while id in tar_dict:
+        while id in list(tar_dict.keys()):
             attempts += 1
             id = str(uuid.uuid4())[:8] # Generates a short unique hex string
             if attempts > 50: # Arbitrary number of attempts to avoid infinite loop
-                logger.error(f"Unable to generate unique ID for person after {attempts} attempts")
-                raise Exception(f"Unable to generate unique ID for person after {attempts} attempts")
+                logger.error(f"Unable to generate unique ID for {dataclass_type.value} after {attempts} attempts")
+                raise Exception(f"Unable to generate unique ID for {dataclass_type.value} after {attempts} attempts")
         return id
     id = name.lower().replace(" ", "-") + "_" + dataclass_type.value.lower()
-    while id in tar_dict: #TODO add a break condition just in case.
+    while id in tar_dict:
         attempts += 1
         id += str(random.randint(0,9))
         if attempts > 50: # Arbitrary number of attempts to avoid infinite loop
-            logger.error(f"Unable to generate unique ID for person after {attempts} attempts")
-            raise Exception(f"Unable to generate unique ID for person after {attempts} attempts")
+            logger.error(f"Unable to generate unique ID for {dataclass_type.value} after {attempts} attempts")
+            raise Exception(f"Unable to generate unique ID for {dataclass_type.value} after {attempts} attempts")
     return id
+def build_cai_hash(data):
+    #Content-Addressable Identifier
+    #build dict of all the data
+    #conect dict to string
+    #hash string to create unique identifier for this data
+    #return hash
+    # Convert data to a canonical string (sorted keys for consistency)
+    data_str = json.dumps(data, sort_keys=True, separators=(',', ':'))
+    # Hash the string using SHA-256
+    hash_obj = hashlib.sha256(data_str.encode('utf-8'))
+    # Return the hex digest as the unique identifier
+    return hash_obj.hexdigest()
 #endregion
 
 #region placements tools
 def build_placement(validated_placement, user: User):
     placement = Placement(
+        cai_hash=validated_placement['cai_hash'],
         placement_id = generate_id(f"{validated_placement['name']} {validated_placement['job_title']}", dataclass_type.PLACEMENT, user),
         company_name=validated_placement['name'],
         job_title=validated_placement['job_title'],
         start_date=validated_placement['start_date'],
         end_date=validated_placement.get('end_date'),
-        project_references=validated_placement['related_projects'] if 'related_projects' in validated_placement else [],
+        project_references=validated_placement['related_projects'] if 'related_projects' in validated_placement else {},
         reference_contacts=validated_placement['reference_contacts'] if 'reference_contacts' in validated_placement else None,
-        related_skills=validated_placement['related_skills'] if 'related_skills' in validated_placement else [],
+        related_skills=validated_placement['related_skills'] if 'related_skills' in validated_placement else {},
         reason_for_leaving=validated_placement['reason_for_leaving'] if 'reason_for_leaving' in validated_placement else None,
     )
     return placement
@@ -210,6 +240,8 @@ def build_placement(validated_placement, user: User):
 #region skills tools
 def build_skill(validated_skill, user: User):
     skill = Skill(
+        cai_hash=validated_skill['cai_hash'],
+        #TODO fix reintroduced bug where object is nested under [skill] e.g. [skill][skill_name] think this only affects skills atm due to link_skills function / use case
         skill_id = generate_id(validated_skill['skill_name'], dataclass_type.SKILL, user),
         skill_name=validated_skill['skill_name'],
         proficiency_level=validated_skill['proficiency_level'] if 'proficiency_level' in validated_skill else None,
@@ -225,12 +257,13 @@ def build_skill(validated_skill, user: User):
 #region project tools
 def build_project(validated_project, user: User):
     project = Project(
+        cai_hash=validated_project['cai_hash'],
         project_id = generate_id(validated_project['project_name'], dataclass_type.PROJECT, user),
         project_name=validated_project['project_name'],
         description=validated_project['description'],
         start_date=validated_project['start_date'] if 'start_date' in validated_project else None,
         end_date=validated_project['end_date'] if 'end_date' in validated_project else None,
-        related_skills=validated_project['related_skills'] if 'related_skills' in validated_project else [],
+        related_skills=validated_project['related_skills'] if 'related_skills' in validated_project else {},
         comment=validated_project['comment'] if 'comment' in validated_project else None,
     )
     return project
@@ -239,10 +272,11 @@ def build_project(validated_project, user: User):
 #region hobby tools
 def build_hobby(validated_hobby, user: User):
     hobby = Hobby(
+        cai_hash = validated_hobby['cai_hash'],
         hobby_id = generate_id(validated_hobby['hobby_name'], dataclass_type.HOBBY, user),
         hobby_name=validated_hobby['hobby_name'],
         description=validated_hobby['description'],
-        related_skills=validated_hobby['related_skills'] if 'related_skills' in validated_hobby else [],
+        related_skills=validated_hobby['related_skills'] if 'related_skills' in validated_hobby else {},
         tags=validated_hobby['tags'] if 'tags' in validated_hobby else None,
         awards_or_accolades=validated_hobby['awards_or_accolades'] if 'awards_or_accolades' in validated_hobby else None,
         comment=validated_hobby['comment'] if 'comment' in validated_hobby else None,
@@ -253,12 +287,13 @@ def build_hobby(validated_hobby, user: User):
 #region qualification tools
 def build_qualification(validated_qualification, user: User):
     qualification = Qualification(
+        cai_hash=validated_qualification['cai_hash'],
         qualification_id = generate_id(validated_qualification['qualification_name'], dataclass_type.QUALIFICATION, user),
         qualification_name=validated_qualification['qualification_name'],
         studied_at=validated_qualification['studied_at'],
         awarded_date=validated_qualification['awarded_date'],
         grade = validated_qualification['grade'],
-        related_skills=validated_qualification['related_skills'] if 'related_skills' in validated_qualification else [],
+        related_skills=validated_qualification['related_skills'] if 'related_skills' in validated_qualification else {},
         tags=validated_qualification['tags'] if 'tags' in validated_qualification else [],
         expiration_date=validated_qualification['expiration_date'] if 'expiration_date' in validated_qualification else None,
         comment=validated_qualification['comment'] if 'comment' in validated_qualification else None,
@@ -295,27 +330,28 @@ def build_contact_details(validated_contact_details):
 #endregion
 
 
-
-
-placements_data = parse_data("data/CV_Resources/Personal/placements.yaml", dataclass_type.PLACEMENT)
-skills_data = parse_data("data/CV_Resources/Personal/skills.yaml", dataclass_type.SKILL)
-projects_data = parse_data("data/CV_Resources/Personal/projects.yaml", dataclass_type.PROJECT)
-hobbies_data = parse_data("data/CV_Resources/AI_Example_data/hobbies.yaml", dataclass_type.HOBBY)
-qualifications_data = parse_data("data/CV_Resources/AI_Example_data/qualifications.yaml", dataclass_type.QUALIFICATION)
-people_data = parse_data("data/CV_Resources/AI_Example_data/people.yaml", dataclass_type.PERSON)
-
-
-
+#region scratch testing
 example_user = User(
     name="Pippa",
     email="test@test.com",
     phone_number="1234567890",)
 
-example_user.placements = placements_data
-example_user.skills = skills_data
-example_user.projects = projects_data
-example_user.hobbies = hobbies_data
-example_user.qualifications = qualifications_data
-example_user.people = people_data
+
+placements_data = parse_data("data/CV_Resources/Personal/placements.yaml", dataclass_type.PLACEMENT, example_user)
+skills_data = parse_data("data/CV_Resources/Personal/skills.yaml", dataclass_type.SKILL, example_user)
+projects_data = parse_data("data/CV_Resources/Personal/projects.yaml", dataclass_type.PROJECT, example_user)
+hobbies_data = parse_data("data/CV_Resources/AI_Example_data/hobbies.yaml", dataclass_type.HOBBY, example_user)
+qualifications_data = parse_data("data/CV_Resources/AI_Example_data/qualifications.yaml", dataclass_type.QUALIFICATION, example_user)
+people_data = parse_data("data/CV_Resources/AI_Example_data/people.yaml", dataclass_type.PERSON, example_user)
+
+
+
+example_user.placements = {placement.placement_id: placement for placement in placements_data}
+example_user.skills = {skill.skill_id: skill for skill in skills_data}
+example_user.projects = {project.project_id: project for project in projects_data}
+example_user.hobbies = {hobby.hobby_id: hobby for hobby in hobbies_data}
+example_user.qualifications = {qualification.qualification_id: qualification for qualification in qualifications_data}
+example_user.people = {person.person_id: person for person in people_data}
 
 print("X")
+#endregion

@@ -6,19 +6,22 @@ from typing import Optional
 @dataclass
 class Skill:
     skill_name: str
-    skill_id: int
+    skill_id: str
+    cai_hash: str
     proficiency_level: Optional[str]
     enjoyment_level: Optional[int] # how much do I enjoy this skill, could do with better name
     tags: Optional[list[str]]
-    related_placements: Optional[list["Placement"]]
-    related_projects: Optional[list["Project"]]
-    related_qualifications: Optional[list["Qualification"]]
+    related_placements: Optional[dict[str, "Placement"]]
+    related_projects: Optional[dict[str, "Project"]]
+    related_qualifications: Optional[dict[str, "Qualification"]]
 @dataclass
 class Qualification:
+    qualification_id: str
     qualification_name: str
     studied_at: str
     awarded_date: datetime
-    related_skills: list["Skill"]
+    cai_hash: str
+    related_skills: dict[str,"Skill"]
     tags: Optional[list[str]]
     grade: Optional[str]
     expiration_date: Optional[datetime] # for qualifications that expire, e.g. first aid, cpr, etc.
@@ -33,6 +36,7 @@ class ContactDetails:
     other_links: Optional[list[str]]
 @dataclass
 class Person:
+    person_id: str
     name: str
     relation_type: str
     is_reference: bool
@@ -40,21 +44,25 @@ class Person:
     comment: Optional[str]
 @dataclass
 class Project:
+    project_id: str
     project_name: str
     description: str
+    cai_hash: str
     start_date: Optional[datetime]
     end_date: Optional[datetime]
-    related_skills: Optional[list["Skill"]]
+    related_skills: Optional[dict[str, "Skill"]]
     comment: Optional[str]
 @dataclass
 class Placement:
+    placement_id: str
     company_name: str
     job_title: str
     start_date: datetime
+    cai_hash: str
     end_date: Optional[datetime]
-    project_references: Optional[list["Project"]]
-    reference_contacts: Optional[list["Person"]]
-    related_skills: Optional[list["Skill"]]
+    project_references: Optional[dict[str, "Project"]]
+    reference_contacts: Optional[dict[str, "Person"]]
+    related_skills: Optional[dict[str, "Skill"]]
     reason_for_leaving: Optional[str]
 @dataclass
 class Location:
@@ -81,9 +89,11 @@ class Advert:
     advertStyle: Enum #e.g. formal, informal, creative, etc. 
 @dataclass
 class Hobby:
+    hobby_id: str
     hobby_name: str
     description: str
-    related_skills: Optional[list["Skill"]]
+    cai_hash: str
+    related_skills: Optional[dict[str, "Skill"]]
     tags: Optional[list[str]]
     awards_or_accolades: Optional[list[str]]
     comment: Optional[str]
