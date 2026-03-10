@@ -32,6 +32,10 @@ Extra Extra Mile
     Stupid Stuff
         Have a prompt to make it spit out the worst possible CV using the relevant data. e.g. user has this skill but hates it.
 
+Tech to lookup 
+    python-fastapi
+    aws-s3-deployment
+    
 History
     [Medium] [CRITICAL] decide on a DB model to use for CV_Resources / Adverts [COMPLETED]
     [Small] [CRITICAL] Decide on and add a logging library / standard [COMPLETE]

@@ -3,12 +3,15 @@ MILESTONE 1
         [COMPLETED] 
             Examples created with AI / Personal
             data_ingestion tooling created for user data
+            spell data injestion right
+            build a user object to store the CV data against
+            put verification of data before a user is built
         ---
         [TODO]
             refactor data_ingestion parse/validates to use generics
             create unit testing suit for data_ingestion
-            spell data injestion right
-            build a user object to store the CV data against
+            create slug id's for projects, skills, qualifications,hobbies,people
+            convert lists to dicts for better lookups (skills etc)
         ---
 ____________________________________________________________________
             |                       |                       |
@@ -47,6 +50,7 @@ ____________V_______________________V_______________________V_________
         [COMPLETED]
         ---
         [TODO]
+            PRIOIRTY research Pydantic
             build search function for skills
         ---
 _________________________________________________________
@@ -77,7 +81,8 @@ ____________V_______________________V_______________________V_________
             Write 3 blurbs for each of the Placements tailored to the job advert.
             C:Prompt:
             Match these blurbs together with the Personal statements and give a ranking of each combo
-            
+            Boots Suggestion Prompt:
+                "Select the top 3 projects/placements that best prove the required skills, and write one high-impact achievement bullet for each."
             Return as yaml, docx or pdf
 _____________________________________________________________________
             |                       |                       |

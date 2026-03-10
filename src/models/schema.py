@@ -6,6 +6,7 @@ from typing import Optional
 @dataclass
 class Skill:
     skill_name: str
+    skill_id: int
     proficiency_level: Optional[str]
     enjoyment_level: Optional[int] # how much do I enjoy this skill, could do with better name
     tags: Optional[list[str]]

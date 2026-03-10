@@ -1,6 +1,8 @@
 import os
+import random
 import yaml
 import logging
+import uuid
 from enum import Enum
 from datetime import datetime, date
 from schema import *
@@ -36,6 +38,7 @@ def read_yaml_file(file_path):
 def validate_data(data, dataclass_type, user):
     validated_data = {}
     working_data = data # can be overwritten by switch case if needed
+    date_fields = ['start_date', 'end_date', 'awarded_date', 'expiration_date']
     match dataclass_type:
         case dataclass_type.SKILL:
             required_fields = ['skill_name']
@@ -64,50 +67,13 @@ def validate_data(data, dataclass_type, user):
         if field in required_fields:
             if not working_data[field] and (not isinstance(working_data[field], bool)): #to allow boolean false values to be valid
                 raise ValueError(f"No {field} in placement company")
-        match field:
-            case "start_date": 
-                start_date = convert_date(working_data[field])
-                validated_data[field] = start_date
+        if field in date_fields:
+                date = convert_date(working_data[field])
+                validated_data[field] = date
                 continue
-            case "end_date":    
-                end_date = convert_date(working_data[field])
-                validated_data[field] = end_date
-                continue
-            case "awarded_date":
-                awarded_date = convert_date(working_data[field])
-                validated_data[field] = awarded_date
-                continue
-            case "expiration_date":
-                expiration_date = convert_date(working_data[field])
-                validated_data[field] = expiration_date
-                continue
+        match field: 
             case "related_skills":
-                #TODO HERE
-                skillset = [] 
-                for skill in working_data[field]:
-                    if skill not in user.skills:
-                        t_skill = build_skill(validate_data(skill, dataclass_type.SKILL, user)) #TODO need to ensure verified data
-                        user.skills.append(t_skill)
-                    else:
-                        t_skill = user.skills[user.skills.index(skill)]
-                    skillset.append(t_skill['id'])
-                    
-                match dataclass_type:
-                    case dataclass_type.PLACEMENT:
-                        validated_data[field] = skillset
-                        continue
-                    case dataclass_type.QUALIFICATION:
-                        validated_data[field] = skillset
-                        continue
-                    case dataclass_type.HOBBY:
-                        validated_data[field] = skillset
-                        continue
-                    case _:
-                        pass
-        #TODO work out this as it's circular. Need to have it added to user.skills but also have it added to current types related_skills via id / name combo. Same to do for projects
-                
-                ##        
-                pass
+                link_skills(working_data[field], dataclass_type, user)
             case "related_projects":
                 ## TODO impliment project link
                 ##for project in working_data[field]:
@@ -117,6 +83,30 @@ def validate_data(data, dataclass_type, user):
             case _:
                 validated_data[field] = working_data[field]
     return validated_data
+
+def link_skills(skill_data_list, dataclass_type, user: User):
+    related_skillset = [] 
+    #create skills if they do not exist, if they exist or not will always append to the skillset which is to later be added to relevent related_skills dicts
+    for entry in skill_data_list:
+        if entry not in user.skills: #TODO does this prevent duplicates with different slugs?
+            #validates, builds, then adds to skills list
+            new_skill = build_skill(validate_data(entry, dataclass_type.SKILL, user), user)
+            user.skills.append(new_skill)
+        else:
+            user.skills[entry.skill_id]
+        related_skillset.append(new_skill[skill_id])
+        
+    registry_config = {
+        dataclass_type.PLACEMENT: {"id_field":'placement_id', "target_dict": user.placements},
+        dataclass_type.PROJECT: {"id_field":'project_id', "target_dict": user.projects},
+        dataclass_type.QUALIFICATION: {"id_field":'qualification_id', "target_dict": user.qualifications},
+        dataclass_type.HOBBY: {"id_field":'hobby_id', "target_dict": user.hobbies},
+    }
+    id_field = registry_config.get(dataclass_type).get("id_field")
+    tar_dict = registry_config.get(dataclass_type).get("target_dict")
+    for skill_id in related_skillset:
+        if id_field not in tar_dict:
+            tar_dict['related_skills'][skill_id] = skill.name
 
 def convert_date(date_field):
     if not date_field:
@@ -170,12 +160,41 @@ def parse_data(file_path, data_type: dataclass_type):
     if not finished_data:
          raise ValueError(f"No valid {data_type.value} entries found in file")
     return finished_data
-    
+
+def generate_id(name: str, dataclass_type: dataclass_type, user: User):
+    registry_map = {
+        dataclass_type.SKILL: user.skills,
+        dataclass_type.QUALIFICATION: user.qualifications,
+        dataclass_type.PROJECT: user.projects,
+        dataclass_type.PLACEMENT: user.placements,
+        dataclass_type.HOBBY: user.hobbies,
+        dataclass_type.PERSON: user.people
+    }
+    tar_dict = registry_map.get(dataclass_type)
+    attempts = 0
+    if dataclass_type == dataclass_type.PERSON:
+        id = str(uuid.uuid4())[:8] # Generates a short unique hex string
+        while id in tar_dict:
+            attempts += 1
+            id = str(uuid.uuid4())[:8] # Generates a short unique hex string
+            if attempts > 50: # Arbitrary number of attempts to avoid infinite loop
+                logger.error(f"Unable to generate unique ID for person after {attempts} attempts")
+                raise Exception(f"Unable to generate unique ID for person after {attempts} attempts")
+        return id
+    id = name.lower().replace(" ", "-") + "_" + dataclass_type.value.lower()
+    while id in tar_dict: #TODO add a break condition just in case.
+        attempts += 1
+        id += str(random.randint(0,9))
+        if attempts > 50: # Arbitrary number of attempts to avoid infinite loop
+            logger.error(f"Unable to generate unique ID for person after {attempts} attempts")
+            raise Exception(f"Unable to generate unique ID for person after {attempts} attempts")
+    return id
 #endregion
 
 #region placements tools
-def build_placement(validated_placement):
+def build_placement(validated_placement, user: User):
     placement = Placement(
+        placement_id = generate_id(f"{validated_placement['name']} {validated_placement['job_title']}", dataclass_type.PLACEMENT, user),
         company_name=validated_placement['name'],
         job_title=validated_placement['job_title'],
         start_date=validated_placement['start_date'],
@@ -189,8 +208,9 @@ def build_placement(validated_placement):
 #endregion
 
 #region skills tools
-def build_skill(validated_skill):
+def build_skill(validated_skill, user: User):
     skill = Skill(
+        skill_id = generate_id(validated_skill['skill_name'], dataclass_type.SKILL, user),
         skill_name=validated_skill['skill_name'],
         proficiency_level=validated_skill['proficiency_level'] if 'proficiency_level' in validated_skill else None,
         enjoyment_level=validated_skill['enjoyment_level'] if 'enjoyment_level' in validated_skill else None,
@@ -203,8 +223,9 @@ def build_skill(validated_skill):
 #endregion
 
 #region project tools
-def build_project(validated_project):
+def build_project(validated_project, user: User):
     project = Project(
+        project_id = generate_id(validated_project['project_name'], dataclass_type.PROJECT, user),
         project_name=validated_project['project_name'],
         description=validated_project['description'],
         start_date=validated_project['start_date'] if 'start_date' in validated_project else None,
@@ -216,8 +237,9 @@ def build_project(validated_project):
 #endregion
 
 #region hobby tools
-def build_hobby(validated_hobby):
+def build_hobby(validated_hobby, user: User):
     hobby = Hobby(
+        hobby_id = generate_id(validated_hobby['hobby_name'], dataclass_type.HOBBY, user),
         hobby_name=validated_hobby['hobby_name'],
         description=validated_hobby['description'],
         related_skills=validated_hobby['related_skills'] if 'related_skills' in validated_hobby else [],
@@ -229,8 +251,9 @@ def build_hobby(validated_hobby):
 #endregion
 
 #region qualification tools
-def build_qualification(validated_qualification):
+def build_qualification(validated_qualification, user: User):
     qualification = Qualification(
+        qualification_id = generate_id(validated_qualification['qualification_name'], dataclass_type.QUALIFICATION, user),
         qualification_name=validated_qualification['qualification_name'],
         studied_at=validated_qualification['studied_at'],
         awarded_date=validated_qualification['awarded_date'],
@@ -244,9 +267,10 @@ def build_qualification(validated_qualification):
 #endregion
 
 #region people tools
-def build_person(validated_person): #Validates and builds contact details within Person.
-    validated_contact_data = validate_data(validated_person['contact_details'], dataclass_type.CONTACT_DETAILS)
+def build_person(validated_person, user: User): #Validates and builds contact details within Person.
+    validated_contact_data = validate_data(validated_person['contact_details'], dataclass_type.CONTACT_DETAILS, user)
     person = Person(
+        person_id = generate_id(validated_person['name'], dataclass_type.PERSON, user),
         name=validated_person['name'],
         relation_type=validated_person['relation_type'],
         is_reference=validated_person['is_reference'],
