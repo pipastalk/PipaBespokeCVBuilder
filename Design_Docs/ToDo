@@ -14,17 +14,16 @@ Prioity
 
 Blocking Progess
 [!BLOCKER!]
-
+##CHECK Design_Docs/Milestone_1.md
 Required
-    [Small] [CRITICAL] Decide on and add a logging library / standard [ACTIVE]
-    [Small] [CRITICAL] Create data_injestion for advert, advert_source and locations
+    [Small] [CRITICAL] Create data_injestion for advert, advert_source and locations [MILESTONE_1]
     [Large] [CRITICAL] Build LLM test prompts, use earlier boot.dev project for some 
         [Small] [CRITICAL] generate system prompt to create a CV based off advert + user's CVObjects
-        [Small] [IMPORTANT] Incorporate a way to push files to the LLM's into the messages / content build functions
+        [Small] [IMPORTANT] Incorporate a way to push files to the LLM's into the messages / content build functions [MILESTONE_1]
         [Medium] [Medium] Review other free LLM tooling I could utilize
-    [Small] [MEDIUM] Refactor parts of data_injestion and associated yaml filesto use generic parsing and validating rather than individual
-    [Small] [IMPORTANT] Create CV layout templates for the LLM to spit it's data into
-    [Large] [CRITICAL] Finish TODO list 
+    [Small] [MEDIUM] Refactor parts of data_injestion and associated yaml files to use generic parsing and validating rather than individual [MILESTONE_1]
+    [Small] [IMPORTANT] Create CV layout templates for the LLM to spit it's data into 
+    [Large] [CRITICAL] Finish TODO list [ENDLESS]
     [Medium] [IMPORTANT] Review Data Classes in /models/schema.py
         [Small] [IMPORTANT] Do we need them all?
         [Small] [IMPORTANT] Would we benefit from additional ones?
@@ -34,6 +33,8 @@ Extra Extra Mile
         Have a prompt to make it spit out the worst possible CV using the relevant data. e.g. user has this skill but hates it.
 
 History
+    [Medium] [CRITICAL] decide on a DB model to use for CV_Resources / Adverts [COMPLETED]
+    [Small] [CRITICAL] Decide on and add a logging library / standard [COMPLETE]
     [Large] [CRITICAL] [!BLOCKER!]Create A Person who is our use case and put their CV details into data [COMPLETE]
     [MEDIUM] [CRITICAL] Create initial tooling to parse yaml into our data types [COMPLETE]
     [Large] [CRITICAL] [!BLOCKER!] Build Data Classes Out as per Data_Objects_Rough.yaml [COMPLETE]

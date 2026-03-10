@@ -2,8 +2,9 @@ import os
 import yaml
 import logging
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, date
 from schema import *
+from User import User
 #region logging setup
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -32,28 +33,28 @@ def read_yaml_file(file_path):
         data = list(yaml.safe_load_all(file))
     return data
 
-def validate_data(data, dataclass_type):
+def validate_data(data, dataclass_type, user):
     validated_data = {}
     working_data = data # can be overwritten by switch case if needed
     match dataclass_type:
+        case dataclass_type.SKILL:
+            required_fields = ['skill_name']
+        case dataclass_type.QUALIFICATION:
+            required_fields = ['qualification_name', 'studied_at', 'awarded_date', 'related_skills']
+        case dataclass_type.CONTACT_DETAILS:
+            required_fields = ['name']
         case dataclass_type.PERSON:
             required_fields = ['name', 'relation_type', 'is_reference']
-        case dataclass_type.PLACEMENT:
-            required_fields = ['name', 'start_date', 'job_title', 'related_skills']
         case dataclass_type.PROJECT:
             required_fields = ['name', 'description']
+        case dataclass_type.PLACEMENT:
+            required_fields = ['name', 'job_title', 'start_date', 'related_skills']
         case dataclass_type.LOCATION:
             required_fields = ['city', 'country']
         # TODO impliment case dataclass_type.ADVERTSOURCE:
         # TODO impliment case dataclass_type.ADVERT:
-        case dataclass_type.SKILL:
-            required_fields = ['skill_name']
-        case dataclass_type.QUALIFICATION:
-            required_fields = ['qualification_name', 'institution', 'date_obtained', 'related_skills']
         case dataclass_type.HOBBY:
-            required_fields = ['hobby_name', 'description', 'related_skills']
-        case dataclass_type.CONTACT_DETAILS:
-            required_fields = ['email']
+            required_fields = ['hobby_name', 'description']
         case _:
             raise ValueError("Invalid dataclass type provided for validation")
 
@@ -63,36 +64,71 @@ def validate_data(data, dataclass_type):
         if field in required_fields:
             if not working_data[field] and (not isinstance(working_data[field], bool)): #to allow boolean false values to be valid
                 raise ValueError(f"No {field} in placement company")
-        if field == "start_date":
-            try:
-                # Check if the date is in the correct format (DD-MM-YYYY)
-                start_date = datetime.strptime(working_data[field], '%d-%m-%Y')
+        match field:
+            case "start_date": 
+                start_date = convert_date(working_data[field])
                 validated_data[field] = start_date
                 continue
-            except ValueError:
-                raise ValueError(f"Invalid date format for {field} in placement company, expected DD-MM-YYYY")
-        if field == "end_date" and working_data[field]: #end date is optional, but if provided should be in the correct format
-            try:
-                end_date = datetime.strptime(working_data[field], '%d-%m-%Y')
+            case "end_date":    
+                end_date = convert_date(working_data[field])
                 validated_data[field] = end_date
                 continue
-            except ValueError:
-                raise ValueError(f"Invalid date format for {field} in placement company, expected DD-MM-YYYY")
-        if field == "related_skills":
-            ##for skill in working_data[field]:
-            ##    if skill not in skillset:
-            ##        s = build_skill()
-            ##        skillset[skill][placements].append(placement['company']['name'])
-            pass
-        if field == "related_projects":
-            ## TODO impliment project link
-            ##for project in working_data[field]:
-            ##    if project not in projectset:
-            ##        p = build_project()
-            ##        projectset[project][placements].append(placement['company']['name'])
-            pass
-        validated_data[field] = working_data[field]
+            case "awarded_date":
+                awarded_date = convert_date(working_data[field])
+                validated_data[field] = awarded_date
+                continue
+            case "expiration_date":
+                expiration_date = convert_date(working_data[field])
+                validated_data[field] = expiration_date
+                continue
+            case "related_skills":
+                #TODO HERE
+                skillset = [] 
+                for skill in working_data[field]:
+                    if skill not in user.skills:
+                        t_skill = build_skill(validate_data(skill, dataclass_type.SKILL, user)) #TODO need to ensure verified data
+                        user.skills.append(t_skill)
+                    else:
+                        t_skill = user.skills[user.skills.index(skill)]
+                    skillset.append(t_skill['id'])
+                    
+                match dataclass_type:
+                    case dataclass_type.PLACEMENT:
+                        validated_data[field] = skillset
+                        continue
+                    case dataclass_type.QUALIFICATION:
+                        validated_data[field] = skillset
+                        continue
+                    case dataclass_type.HOBBY:
+                        validated_data[field] = skillset
+                        continue
+                    case _:
+                        pass
+        #TODO work out this as it's circular. Need to have it added to user.skills but also have it added to current types related_skills via id / name combo. Same to do for projects
+                
+                ##        
+                pass
+            case "related_projects":
+                ## TODO impliment project link
+                ##for project in working_data[field]:
+                ##    if project not in user.projects:
+                ##        user.projects.append(build_project())
+                pass
+            case _:
+                validated_data[field] = working_data[field]
     return validated_data
+
+def convert_date(date_field):
+    if not date_field:
+        return None
+    if isinstance(date_field, datetime):
+        return date_field.date()
+    if not isinstance(date_field, date):
+        try:
+            date_field = datetime.strptime(date_field, '%d-%m-%Y')
+        except ValueError:
+            raise ValueError(f"date entered as a string with invalid date format, expected DD-MM-YYYY")
+    return date_field
 
 def parse_data(file_path, data_type: dataclass_type):
     #TODO correct yaml data to be uniform so no placement['company'] / skill difference in data then convert parses into using this shared helper.
@@ -112,7 +148,8 @@ def parse_data(file_path, data_type: dataclass_type):
             build = build_skill
         case dataclass_type.QUALIFICATION:
             build = build_qualification
-        case dataclass_type.HOBBY:            pass
+        case dataclass_type.HOBBY:
+            build = build_hobby
         case _:
             raise ValueError("Invalid dataclass type provided for parsing")
     
@@ -121,6 +158,8 @@ def parse_data(file_path, data_type: dataclass_type):
         logger.info(f"Parsing {data_type.value} entry: {entry}")
         if not entry:
             raise ValueError(f"Empty entry found in {data_type.value} file, please ensure all entries have data. .yaml files should not end in ---")
+        
+        
         validated_data = validate_data(entry, data_type)
         if build:
             finished_entry = build(validated_data)
@@ -131,98 +170,25 @@ def parse_data(file_path, data_type: dataclass_type):
     if not finished_data:
          raise ValueError(f"No valid {data_type.value} entries found in file")
     return finished_data
+    
 #endregion
 
 #region placements tools
-def parse_placements(file_path):
-    placements = []
-    file_data = read_yaml_file(file_path)
-    for placement in file_data:
-        logger.info(f"Parsing placement entry: {placement['company']['name']}")
-        validated_placement = validate_placement_data(placement)
-        finished_placement = build_placement(validated_placement)
-        placements.append(finished_placement)
-    return placements
-
-def validate_placement_data(placement): #helper function to validate data inside placements. Use before build_placement()
-    validated_placement = {}
-    required_fields = ['name', 'start_date', 'job_title', 'related_skills'] 
-    if not placement['company']:
-        raise ValueError("Placement was invalid, expected company as base field")
-    for field in placement['company']:
-        if field in required_fields:
-            if not placement['company'][field]:
-                raise ValueError(f"No {field} in placement company")
-        if field == "start_date":
-            try:
-                # Check if the date is in the correct format (DD-MM-YYYY)
-                start_date = datetime.strptime(placement['company'][field], '%d-%m-%Y')
-                validated_placement[field] = start_date
-                continue
-            except ValueError:
-                raise ValueError(f"Invalid date format for {field} in placement company, expected DD-MM-YYYY")
-        if field == "end_date" and placement['company'][field]: #end date is optional, but if provided should be in the correct format
-            try:
-                end_date = datetime.strptime(placement['company'][field], '%d-%m-%Y')
-                validated_placement[field] = end_date
-                continue
-            except ValueError:
-                raise ValueError(f"Invalid date format for {field} in placement company, expected DD-MM-YYYY")
-        if field == "related_skills":
-            ##for skill in placement['company'][field]:
-            ##    if skill not in skillset:
-            ##        s = build_skill()
-            ##        skillset[skill][placements].append(placement['company']['name'])
-            pass
-        if field == "related_projects":
-            ## TODO impliment project link
-            ##for project in placement['company'][field]:
-            ##    if project not in projectset:
-            ##        p = build_project()
-            ##        projectset[project][placements].append(placement['company']['name'])
-            pass
-        validated_placement[field] = placement['company'][field]
-    return validated_placement
-
 def build_placement(validated_placement):
     placement = Placement(
         company_name=validated_placement['name'],
         job_title=validated_placement['job_title'],
         start_date=validated_placement['start_date'],
         end_date=validated_placement.get('end_date'),
-        project_references=validated_placement['related_projects'] if 'related_projects' in validated_placement else None,
+        project_references=validated_placement['related_projects'] if 'related_projects' in validated_placement else [],
         reference_contacts=validated_placement['reference_contacts'] if 'reference_contacts' in validated_placement else None,
-        related_skills=validated_placement['related_skills'] if 'related_skills' in validated_placement else None,
+        related_skills=validated_placement['related_skills'] if 'related_skills' in validated_placement else [],
         reason_for_leaving=validated_placement['reason_for_leaving'] if 'reason_for_leaving' in validated_placement else None,
     )
     return placement
 #endregion
 
 #region skills tools
-def parse_skills(file_path):
-    skills = []
-    file_data = read_yaml_file(file_path)
-    for skill in file_data:
-        logger.info(f"Parsing skill entry: {skill['skill']['skill_name']}")
-        validated_skill = validate_skill_data(skill)
-        finished_skill = build_skill(validated_skill)
-        skills.append(finished_skill)
-    return skills
-
-def validate_skill_data(skill):
-    validated_skill = {}
-    required_fields = ['name']
-    skill = skill['skill'] 
-    for field in skill:
-        if field in required_fields:
-            if not skill[field]:
-                raise ValueError(f"No {field} in skill")
-        if field == "enjoyment_level":
-            if not isinstance(skill[field], int) or skill[field] < 1 or skill[field] > 10:
-                raise ValueError("Enjoyment level must be an integer between 1 and 10")
-        validated_skill[field] = skill[field]
-    return validated_skill
-
 def build_skill(validated_skill):
     skill = Skill(
         skill_name=validated_skill['skill_name'],
@@ -237,64 +203,39 @@ def build_skill(validated_skill):
 #endregion
 
 #region project tools
-def parse_projects(file_path):
-    projects = []
-    file_data = read_yaml_file(file_path)
-    for project in file_data:
-        logger.info(f"Parsing project entry: {project['project_name']}")
-        validated_project = validate_data(project, dataclass_type.PROJECT)
-        finished_project = build_project(validated_project)
-        projects.append(finished_project)
-    return projects
-
 def build_project(validated_project):
     project = Project(
         project_name=validated_project['project_name'],
         description=validated_project['description'],
         start_date=validated_project['start_date'] if 'start_date' in validated_project else None,
         end_date=validated_project['end_date'] if 'end_date' in validated_project else None,
-        related_skills=validated_project['related_skills'] if 'related_skills' in validated_project else None,
+        related_skills=validated_project['related_skills'] if 'related_skills' in validated_project else [],
         comment=validated_project['comment'] if 'comment' in validated_project else None,
     )
     return project
 #endregion
 
 #region hobby tools
-def parse_hobbies(file_path):
-    data_type = dataclass_type.HOBBY
-    data = []
-    finished_data = None
-    file_data = read_yaml_file(file_path)
-    for entry in file_data:
-        validated_data = validate_data(entry, data_type)
-        finished_data = build_hobby(validated_data)
-        data.append(finished_data)
-    if not finished_data:
-         raise ValueError(f"No valid {data_type.value} entries found in file")
-    return finished_data
 def build_hobby(validated_hobby):
     hobby = Hobby(
         hobby_name=validated_hobby['hobby_name'],
         description=validated_hobby['description'],
-        related_skills=validated_hobby['related_skills'],
+        related_skills=validated_hobby['related_skills'] if 'related_skills' in validated_hobby else [],
         tags=validated_hobby['tags'] if 'tags' in validated_hobby else None,
-        awards_or_acolades=validated_hobby['awards_or_acolades'] if 'awards_or_acolades' in validated_hobby else None,
+        awards_or_accolades=validated_hobby['awards_or_accolades'] if 'awards_or_accolades' in validated_hobby else None,
         comment=validated_hobby['comment'] if 'comment' in validated_hobby else None,
     )
     return hobby
 #endregion
 
 #region qualification tools
-def parse_qualifications(file_path):
-    return parse_data(file_path, dataclass_type.QUALIFICATION)
-    
 def build_qualification(validated_qualification):
     qualification = Qualification(
         qualification_name=validated_qualification['qualification_name'],
         studied_at=validated_qualification['studied_at'],
         awarded_date=validated_qualification['awarded_date'],
         grade = validated_qualification['grade'],
-        related_skills=validated_qualification['related_skills'],
+        related_skills=validated_qualification['related_skills'] if 'related_skills' in validated_qualification else [],
         tags=validated_qualification['tags'] if 'tags' in validated_qualification else [],
         expiration_date=validated_qualification['expiration_date'] if 'expiration_date' in validated_qualification else None,
         comment=validated_qualification['comment'] if 'comment' in validated_qualification else None,
@@ -303,9 +244,6 @@ def build_qualification(validated_qualification):
 #endregion
 
 #region people tools
-def parse_people(file_path):
-    return parse_data(file_path, dataclass_type.PERSON)
-
 def build_person(validated_person): #Validates and builds contact details within Person.
     validated_contact_data = validate_data(validated_person['contact_details'], dataclass_type.CONTACT_DETAILS)
     person = Person(
@@ -332,9 +270,28 @@ def build_contact_details(validated_contact_details):
     return contact_details
 #endregion
 
-parse_placements("data/CV_Resources/Personal/placements.yaml")
-parse_skills("data/CV_Resources/Personal/skills.yaml")
-parse_projects("data/CV_Resources/Personal/projects.yaml")
-parse_hobbies("data/CV_Resources/AI_Example_data/hobbies.yaml")
-parse_qualifications("data/CV_Resources/AI_Example_data/qualifications.yaml")
-parse_people("data/CV_Resources/AI_Example_data/people.yaml")
+
+
+
+placements_data = parse_data("data/CV_Resources/Personal/placements.yaml", dataclass_type.PLACEMENT)
+skills_data = parse_data("data/CV_Resources/Personal/skills.yaml", dataclass_type.SKILL)
+projects_data = parse_data("data/CV_Resources/Personal/projects.yaml", dataclass_type.PROJECT)
+hobbies_data = parse_data("data/CV_Resources/AI_Example_data/hobbies.yaml", dataclass_type.HOBBY)
+qualifications_data = parse_data("data/CV_Resources/AI_Example_data/qualifications.yaml", dataclass_type.QUALIFICATION)
+people_data = parse_data("data/CV_Resources/AI_Example_data/people.yaml", dataclass_type.PERSON)
+
+
+
+example_user = User(
+    name="Pippa",
+    email="test@test.com",
+    phone_number="1234567890",)
+
+example_user.placements = placements_data
+example_user.skills = skills_data
+example_user.projects = projects_data
+example_user.hobbies = hobbies_data
+example_user.qualifications = qualifications_data
+example_user.people = people_data
+
+print("X")

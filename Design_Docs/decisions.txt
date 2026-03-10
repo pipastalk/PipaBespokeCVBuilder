@@ -2,42 +2,53 @@ LLM builds Data Objects?:
     How early should the LLM trigger on adverts?
     Should it just be a request with the advert document asking it to fill out all the relevant data_objects?
     Do I need the advert put into data_objects at all or can I just have the LLM scan it vs the user's data_objects to build? 
-    
+STORAGE
 How do I store users?
     atm this intended for a personal use so only 1 user but may as well have user as an object with data under it to call it
-
+    A user will be built off the yaml using ingestion tooling, this will be done on launch.
+        Pro no data needs to be retained
+        Con will have to ensure to keep hold of yaml files to build 
 Tested liteLLM library/modules https://docs.litellm.ai/ and choosing to use this rather than build multiple llm request/responses manually. 
 
 
+DATABASE
+Chosen to use tinydb
+        Time investment in SQLLite is beyond the aimed timeline of project while tinydb won't be great for relational links between skills,projects,placements, etc it will meet the requirements and can be iterated on later if needed / once my skillset has increased
 
-
-
-
+FLOW
 Having a think about the LLM queries and researching how would be best to reduce token use and still get valid responses
-
-1. Parse job advert (PDF/webpage) -> extract text
-        |
-        v
-2. Inject: job advert text + all skills
-   Prompt: "Return skills from the list relevant to this job"
-        |
-        v
-3. Fetch projects & placements tagged with returned skills
-        |
-        v
-4. Inject: job advert + fetched data
-   Prompt: "Write tailored blurbs for each, prioritise X entries"
-        For each recommended project and placement, return:
-            - name
-            - tailored_blurb (2-3 sentences, referencing the job requirements)
-            - relevant_skills (list)
-         Return as a YAML array.
-        |
-        v
-5. Return structured response (JSON or markdown)
-        |
-        v
-6. App Parse response, select template, input blurbs and titles into template
+        MILESTONE 1
+        0. MANUAL uploads YAML of user's CV Resources
+                |
+                v
+        1. MANUAL upload of advert
+                |
+                v
+        2. LLM: Inject: job advert text + all skills titles
+                response - Prompt: "Return skills from the list relevant to this job"              
+                |
+                v
+        3. APP cross references skills in response with Skills table
+                |
+                v
+        3.1 APP gives Skills objects that match along with titles of placements/projects that are linked       
+                |
+                v
+        3.2 LLM Inject job advert and skills and placements objects and generate a list of CV options
+                A:Prompt:
+                Write 3 personal statement tailored to the job advert
+                B:Prompt:
+                Write 3 blurbs for each of the Placements tailored to the job advert.
+                C:Prompt:
+                Match these blurbs together with the Personal statements and give a ranking of each combo
+               
+                Return as yaml, docx or pdf
+                |
+                v
+        4. APP Parse response and present/export for user
+                |
+                v
+        7. MANUAL user inserts into their templates
 
 
 Future tech

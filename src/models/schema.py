@@ -18,7 +18,7 @@ class Qualification:
     studied_at: str
     awarded_date: datetime
     related_skills: list["Skill"]
-    tags: list[str]
+    tags: Optional[list[str]]
     grade: Optional[str]
     expiration_date: Optional[datetime] # for qualifications that expire, e.g. first aid, cpr, etc.
     comment: Optional[str]
@@ -35,7 +35,7 @@ class Person:
     name: str
     relation_type: str
     is_reference: bool
-    contact_details: ContactDetails
+    contact_details: Optional[ContactDetails]
     comment: Optional[str]
 @dataclass
 class Project:
@@ -50,7 +50,7 @@ class Placement:
     company_name: str
     job_title: str
     start_date: datetime
-    end_date: datetime
+    end_date: Optional[datetime]
     project_references: Optional[list["Project"]]
     reference_contacts: Optional[list["Person"]]
     related_skills: Optional[list["Skill"]]
@@ -58,8 +58,8 @@ class Placement:
 @dataclass
 class Location:
     city: str #Will accept Remote/Home as a city
+    country: str #maybe use ISO country codes and a enum for this?
     address: Optional[str] #is there a library for this?
-    country: Optional[str] #maybe use ISO country codes and a enum for this?
     post_or_zip_code: Optional[str] #check libraries for validating this?
     gps_coordinates: Optional[str] #TODO bonus extra for google maps link
 @dataclass
@@ -82,7 +82,7 @@ class Advert:
 class Hobby:
     hobby_name: str
     description: str
-    related_skills: list["Skill"]
+    related_skills: Optional[list["Skill"]]
     tags: Optional[list[str]]
-    awards_or_acolades: Optional[list[str]]
+    awards_or_accolades: Optional[list[str]]
     comment: Optional[str]
