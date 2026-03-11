@@ -2,10 +2,8 @@ from heapq import merge
 import json #only used for CAI hasing as of 2026-03-10
 import hashlib
 import os
-import random
 import yaml
 import logging
-import uuid
 from enum import Enum
 from datetime import datetime, date
 from schema import *
@@ -38,7 +36,7 @@ def read_yaml_file(file_path):
         data = list(yaml.safe_load_all(file))
     return data
 
-def validate_data(data, dataclass_type, user): #TODO move cai_hash assignment into required fields checks
+def validate_data(data, dataclass_type, user): 
     validated_data = {}
     working_data = data # can be overwritten by switch case if needed
     date_fields = ['start_date', 'end_date', 'awarded_date', 'expiration_date']
@@ -246,7 +244,6 @@ def build_placement(validated_placement, user: User):
 def build_skill(validated_skill, user: User):
     skill = Skill(
         cai_hash=validated_skill['cai_hash'],
-        #TODO fix reintroduced bug where object is nested under [skill] e.g. [skill][name] think this only affects skills atm due to link_skills function / use case
         id = generate_id(validated_skill, dataclass_type.SKILL, user),
         skill_name=validated_skill['name'],
         proficiency_level=validated_skill['proficiency_level'] if 'proficiency_level' in validated_skill else None,
@@ -359,5 +356,9 @@ example_user.hobbies = {hobby.id: hobby for hobby in hobbies_data}
 example_user.qualifications = {qualification.id: qualification for qualification in qualifications_data}
 example_user.people = {person.id: person for person in people_data}
 
-    
+print("x")
 #endregion
+#TODO move cai_hash assignment into required fields checks
+#TODO when a match is found update any null field with existing ones
+#TODO handle generate_id duplicate id's better, currently a short hash could hit limits, not sure if we may hit an additional unhandled error that no more values in cai_hash
+#TODO sort the related_projects, related_placements, related_hobbies etc
