@@ -1,19 +1,19 @@
 %YAML 1.2
 ---
-qualification_name: Bachelor of Science in Computer Science
+name: Bachelor of Science in Computer Science
 studied_at: University of Example
 grade: First Class Honours
 awarded_date: 15-06-2023
 expiration_date: null
 related_skills:
   - 
-    skill_name: Programming
+    name: Programming
     proficiency_level: null
   - 
-    skill_name: Data Structures
+    name: Data Structures
     proficiency_level: null
   - 
-    skill_name: Algorithms
+    name: Algorithms
     proficiency_level: null
 comment: "Focused on software development and machine learning modules."
 tags:
@@ -21,20 +21,20 @@ tags:
   - Computer Science
   - Degree
 ---
-qualification_name: General Certificate of Secondary Education (GCSE) - Mathematics
+name: General Certificate of Secondary Education (GCSE) - Mathematics
 studied_at: Example High School
 grade: A*
 awarded_date: 2017-08-20
 expiration_date: null
 related_skills:
   - 
-    skill_name: Numeracy
+    name: Numeracy
     proficiency_level: null
   - 
-    skill_name: Problem Solving
+    name: Problem Solving
     proficiency_level: null
   -
-    skill_name: Logical Reasoning
+    name: Logical Reasoning
     proficiency_level: null
 comment: "Achieved top grade in national exams."
 tags:
@@ -42,20 +42,20 @@ tags:
   - Mathematics
   - School
 ---
-qualification_name: A-Level Physics
+name: A-Level Physics
 studied_at: Example Sixth Form College
 grade: A
 awarded_date: 2019-08-15
 expiration_date: null
 related_skills:
   - 
-    skill_name: Analytical Thinking
+    name: Analytical Thinking
     proficiency_level: null
   - 
-    skill_name: Experimentation
+    name: Experimentation
     proficiency_level: null
   - 
-    skill_name: Scientific Method
+    name: Scientific Method
     proficiency_level: null
 comment: "Completed advanced coursework and laboratory projects."
 tags:
@@ -63,20 +63,20 @@ tags:
   - Physics
   - College
 ---
-qualification_name: AWS Certified Solutions Architect - Associate
+name: AWS Certified Solutions Architect - Associate
 studied_at: Amazon Web Services
 grade: Pass
 awarded_date: 2025-03-10
 expiration_date: 2028-03-10
 related_skills:
   - 
-    skill_name: Cloud Computing
+    name: Cloud Computing
     proficiency_level: null
   - 
-    skill_name: Solution Architecture
+    name: Solution Architecture
     proficiency_level: null
   - 
-    skill_name: AWS Services
+    name: AWS Services
     proficiency_level: null
 comment: "Validated ability to design and deploy scalable systems on AWS."
 tags:
@@ -84,20 +84,20 @@ tags:
   - Cloud
   - Vendor
 ---
-qualification_name: Cisco Certified Network Associate (CCNA)
+name: Cisco Certified Network Associate (CCNA)
 studied_at: Cisco
 grade: Pass
 awarded_date: 2024-11-01
 expiration_date: 2027-11-01
 related_skills:
   - 
-    skill_name: Networking
+    name: Networking
     proficiency_level: null
   - 
-    skill_name: Troubleshooting
+    name: Troubleshooting
     proficiency_level: null
   - 
-    skill_name: Security
+    name: Security
     proficiency_level: null
 comment: "Demonstrated knowledge of networking fundamentals and security."
 tags:
@@ -105,7 +105,7 @@ tags:
   - Networking
   - Vendor
 ---
-qualification_name: Professional Scrum Master I (PSM I)
+name: Professional Scrum Master I (PSM I)
 studied_at: Scrum.org
 grade: Pass
 awarded_date: 2022-05-12
@@ -113,13 +113,13 @@ expiration_date: null
 
 related_skills:
   - 
-    skill_name: Agile Methodologies
+    name: Agile Methodologies
     proficiency_level: null
   - 
-    skill_name: Team Leadership
+    name: Team Leadership
     proficiency_level: null
   - 
-    skill_name: Project Management
+    name: Project Management
     proficiency_level: null
 comment: "Certified in Scrum practices and agile project delivery."
 tags:
@@ -127,86 +127,86 @@ tags:
   - Agile
   - Professional
 ---
-qualification_name: Google IT Support Professional Certificate
+name: Google IT Support Professional Certificate
 studied_at: Coursera
 grade: Pass
 awarded_date: 2021-09-30
 expiration_date: null
 related_skills:
   - 
-    skill_name: IT Support
+    name: IT Support
     proficiency_level: null
   - 
-    skill_name: Troubleshooting
+    name: Troubleshooting
     proficiency_level: null
   - 
-    skill_name: Customer Service
+    name: Customer Service
     proficiency_level: null
 # No comment, no tags
 ---
-qualification_name: First Aid at Work
+name: First Aid at Work
 studied_at: Red Cross
 grade: Pass
 awarded_date: 2020-04-15
 expiration_date: 2023-04-15
 related_skills:
 - 
-  skill_name: Emergency Response
+  name: Emergency Response
   proficiency_level: null
 - 
-  skill_name: Communication
+  name: Communication
   proficiency_level: null
 # No tags, no comment
 ---
-qualification_name: Diploma in Graphic Design
+name: Diploma in Graphic Design
 studied_at: Example College of Art
 grade: Distinction
 awarded_date: 2022-07-01
 expiration_date: null
 related_skills:
   - 
-    skill_name: Design
+    name: Design
     proficiency_level: null
   - 
-    skill_name: Creativity
+    name: Creativity
     proficiency_level: null
   - 
-    skill_name: Digital Tools
+    name: Digital Tools
     proficiency_level: null
 tags:
   - Art
   - Design
 # No comment
 ---
-qualification_name: "Microsoft Certified: Azure Fundamentals"
+name: "Microsoft Certified: Azure Fundamentals"
 studied_at: Microsoft
 grade: Pass
 awarded_date: 2023-02-10
 expiration_date: 2026-02-10
 related_skills:
   - 
-    skill_name: Cloud Computing
+    name: Cloud Computing
     proficiency_level: null
   - 
-    skill_name: Azure
+    name: Azure
     proficiency_level: null
   - 
-    skill_name: Fundamentals
+    name: Fundamentals
     proficiency_level: null
 comment: "Entry-level certification for cloud basics."
 # No tags
 ---
-qualification_name: High School Diploma
+name: High School Diploma
 studied_at: Example High School
 grade: Merit
 awarded_date: 2018-06-20
 expiration_date: null
 related_skills:
   - 
-    skill_name: General Education
+    name: General Education
     proficiency_level: null
   - 
-    skill_name: Study Skills
+    name: Study Skills
     proficiency_level: null
 tags:
   - School

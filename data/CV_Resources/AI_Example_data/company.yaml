@@ -1,4 +1,4 @@
-#company_name: str
+#name: str
 #industry: str
 #size: int
 #contact_details: ContactDetails
@@ -7,7 +7,7 @@
 
 %YAML 1.2
 ---
-company_name: Example Tech Solutions
+name: Example Tech Solutions
 industry: Software Development
 size: 250
 contact_details:
@@ -17,7 +17,7 @@ culture: "Innovative and collaborative, with a focus on employee growth and work
 comment: "Known for its supportive environment and opportunities for professional development."
 
 ---
-company_name: GreenLeaf Logistics
+name: GreenLeaf Logistics
 industry: Transportation
 size: 1200
 contact_details:
@@ -26,14 +26,14 @@ contact_details:
 # No culture, no comment
 
 ---
-company_name: BlueSky Analytics
+name: BlueSky Analytics
 industry: Data Science
 size: 80
 culture: "Flexible, remote-first, and highly data-driven."
 # No contact_details, no comment
 
 ---
-company_name: Artisan Foods Ltd
+name: Artisan Foods Ltd
 industry: Food Production
 size: 45
 contact_details:
@@ -43,7 +43,7 @@ comment: "Family-owned business with a strong local presence."
 # No culture
 
 ---
-company_name: Quantum Hardware Inc.
+name: Quantum Hardware Inc.
 industry: Electronics Manufacturing
 size: 5000
 # No contact_details, no culture, no comment

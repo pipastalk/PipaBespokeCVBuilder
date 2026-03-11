@@ -1,18 +1,18 @@
 %YAML 1.2
 ---
 # Example hobby entries
-hobby_name: Photography
+name: Photography
 description: >
   Capturing moments and scenes using a camera, with a focus on composition and lighting.
 related_skills:
   - 
-    skill_name: Creativity
+    name: Creativity
     proficiency_level: null
   - 
-    skill_name: Attention to Detail
+    name: Attention to Detail
     proficiency_level: null
   - 
-    skill_name: Technical Proficiency
+    name: Technical Proficiency
     proficiency_level: null
 awards_or_accolades:
   - "Winner, Local Photo Contest 2024"
@@ -23,18 +23,18 @@ tags:
   - Creative
 comment: "Enjoy experimenting with different styles and editing techniques."
 ---
-hobby_name: Chess
+name: Chess
 description: >
   Playing competitive and casual chess, both online and in-person, to improve strategic thinking.
 related_skills:
   - 
-    skill_name: Problem Solving
+    name: Problem Solving
     proficiency_level: null
   - 
-    skill_name: Strategic Planning
+    name: Strategic Planning
     proficiency_level: null
   - 
-    skill_name: Patience
+    name: Patience
     proficiency_level: null
 awards_or_accolades:
   - "Quarterfinalist, Regional Chess Tournament 2025"
@@ -44,18 +44,18 @@ tags:
   - Logic
 comment: "Active member of the university chess club."
 ---
-hobby_name: Hiking
+name: Hiking
 description: >
   Exploring nature trails and mountains, often organizing group hikes and documenting experiences.
 related_skills:
   - 
-    skill_name: Endurance
+    name: Endurance
     proficiency_level: null
   - 
-    skill_name: Leadership
+    name: Leadership
     proficiency_level: null
   - 
-    skill_name: Navigation
+    name: Navigation
     proficiency_level: null
 awards_or_accolades:
   - "Completed Three Peaks Challenge 2023"
@@ -65,18 +65,18 @@ tags:
   - Adventure
 comment: "Passionate about conservation and outdoor education."
 ---
-hobby_name: Cooking
+name: Cooking
 description: >
   Experimenting with recipes from various cuisines, focusing on healthy and creative meals.
 related_skills:
   - 
-    skill_name: Organization
+    name: Organization
     proficiency_level: null
   - 
-    skill_name: Creativity
+    name: Creativity
     proficiency_level: null
   - 
-    skill_name: Time Management
+    name: Time Management
     proficiency_level: null
 awards_or_accolades:
   - "Best Dessert, Community Bake-Off 2024"

@@ -6,7 +6,7 @@ from typing import Optional
 @dataclass
 class Skill:
     skill_name: str
-    skill_id: str
+    id: str
     cai_hash: str
     proficiency_level: Optional[str]
     enjoyment_level: Optional[int] # how much do I enjoy this skill, could do with better name
@@ -16,7 +16,7 @@ class Skill:
     related_qualifications: Optional[dict[str, "Qualification"]]
 @dataclass
 class Qualification:
-    qualification_id: str
+    id: str
     qualification_name: str
     studied_at: str
     awarded_date: datetime
@@ -36,7 +36,7 @@ class ContactDetails:
     other_links: Optional[list[str]]
 @dataclass
 class Person:
-    person_id: str
+    id: str
     name: str
     relation_type: str
     is_reference: bool
@@ -44,7 +44,7 @@ class Person:
     comment: Optional[str]
 @dataclass
 class Project:
-    project_id: str
+    id: str
     project_name: str
     description: str
     cai_hash: str
@@ -54,7 +54,7 @@ class Project:
     comment: Optional[str]
 @dataclass
 class Placement:
-    placement_id: str
+    id: str
     company_name: str
     job_title: str
     start_date: datetime
@@ -89,7 +89,7 @@ class Advert:
     advertStyle: Enum #e.g. formal, informal, creative, etc. 
 @dataclass
 class Hobby:
-    hobby_id: str
+    id: str
     hobby_name: str
     description: str
     cai_hash: str

@@ -102,8 +102,8 @@ def get_link_skills(skill_data_list, dataclass_type, user: User):
         new_cai = build_cai_hash(entry)
         if len(user.skills) == 0: #always add if empty dict
             new_skill = build_skill(validate_data(entry, dataclass_type.SKILL, user), user)
-            user.skills[new_skill.skill_id] = new_skill
-            related_skillset[new_skill.skill_id] = new_skill.skill_id
+            user.skills[new_skill.id] = new_skill
+            related_skillset[new_skill.id] = new_skill.id
             continue
         existing_skills = {}
         for k, skill in user.skills.items():
@@ -111,10 +111,10 @@ def get_link_skills(skill_data_list, dataclass_type, user: User):
         if new_cai not in existing_skills:
             #validates, builds, then adds to skills list
             new_skill = build_skill(validate_data(entry, dataclass_type.SKILL, user), user)
-            user.skills[new_skill.skill_id] = new_skill
+            user.skills[new_skill.id] = new_skill
         else:
             new_skill = existing_skills[new_cai]
-        related_skillset[new_skill.skill_id] = new_skill.skill_id
+        related_skillset[new_skill.id] = new_skill.id
     return related_skillset
 
 def convert_date(date_field):
@@ -185,34 +185,31 @@ def check_for_duplicates(cai_hash, dataclass_type: dataclass_type, user: User):
         return existing_matches[cai_hash]
     return False
 
-def generate_id(name: str, dataclass_type: dataclass_type, user: User):
-    registry_map = {
-        dataclass_type.SKILL: user.skills,
-        dataclass_type.QUALIFICATION: user.qualifications,
-        dataclass_type.PROJECT: user.projects,
-        dataclass_type.PLACEMENT: user.placements,
-        dataclass_type.HOBBY: user.hobbies,
-        dataclass_type.PERSON: user.people
+def generate_id(data, dataclass_type: dataclass_type, user: User):
+    registry_config = {
+        dataclass_type.SKILL: {'id': data['name'], 'dict': user.skills},
+        dataclass_type.QUALIFICATION: {'id': data['name'], 'dict': user.qualifications},
+        dataclass_type.PROJECT: {'id': f"{data['name']} {data['cai_hash'][:4]}", 'dict': user.projects}, #adds short hash to help differentiate projects with same name
+        dataclass_type.PLACEMENT: {'id': f"{data['name']} {data['job_title'] if dataclass_type == dataclass_type.PLACEMENT else ''}", 'dict': user.placements}, #adds job title to help differentiate placements with same company name
+        dataclass_type.HOBBY: {'id': data['name'], 'dict': user.hobbies},
+        dataclass_type.PERSON: {'id': data['cai_hash'], 'dict': user.people}
     }
-    tar_dict = registry_map.get(dataclass_type)
-    attempts = 0
-    if dataclass_type == dataclass_type.PERSON:
-        id = str(uuid.uuid4())[:8] # Generates a short unique hex string
-        while id in list(tar_dict.keys()):
+    target_dict = registry_config[dataclass_type]['dict']
+    unconverted_id = registry_config[dataclass_type]['id']
+    id = str(unconverted_id).lower().replace(" ", "_") + "-" + dataclass_type.value.upper()
+    dupe = check_for_duplicates(data['cai_hash'], dataclass_type, user)
+    if dupe is False:
+        logger.info(f"Generated new id {id} for {dataclass_type.value} with name {data['name']}")
+        attempts = 0
+        while id in target_dict: 
+            id = str(unconverted_id).lower().replace(" ", "_") + "-" + dataclass_type.value.upper() + "-" + data['cai_hash'][2:(attempts+2)] #adds short hash to ensure unique id, in case of duplicate names. Only added if duplicate found to keep ids clean where possible
             attempts += 1
-            id = str(uuid.uuid4())[:8] # Generates a short unique hex string
-            if attempts > 50: # Arbitrary number of attempts to avoid infinite loop
-                logger.error(f"Unable to generate unique ID for {dataclass_type.value} after {attempts} attempts")
-                raise Exception(f"Unable to generate unique ID for {dataclass_type.value} after {attempts} attempts")
+            if attempts > 12:
+                logger.error(f"Duplicate id {id} found for {dataclass_type.value} with name {data['name']}")
+                raise ValueError(f"Unable to generate new ID for {dataclass_type.value} with name {data['name']} after 12 attempts.") #TODO handle this better
         return id
-    id = name.lower().replace(" ", "-") + "_" + dataclass_type.value.lower()
-    while id in tar_dict:
-        attempts += 1
-        id += str(random.randint(0,9))
-        if attempts > 50: # Arbitrary number of attempts to avoid infinite loop
-            logger.error(f"Unable to generate unique ID for {dataclass_type.value} after {attempts} attempts")
-            raise Exception(f"Unable to generate unique ID for {dataclass_type.value} after {attempts} attempts")
-    return id
+    logger.info(f"Duplicate found for {dataclass_type.value} with name {data['name']}, using existing id {dupe.__dict__.get(dataclass_type.value.lower() + '_id')}")
+    raise ValueError(f"Duplicate entry found for {dataclass_type.value} with name {data['name']}, please use existing entry {dupe.id}")      
 def build_cai_hash(data):
     #Content-Addressable Identifier
     #build dict of all the data
@@ -231,7 +228,7 @@ def build_cai_hash(data):
 def build_placement(validated_placement, user: User):
     placement = Placement(
         cai_hash=validated_placement['cai_hash'],
-        placement_id = generate_id(f"{validated_placement['name']} {validated_placement['job_title']}", dataclass_type.PLACEMENT, user),
+        id = generate_id(validated_placement, dataclass_type.PLACEMENT, user),
         company_name=validated_placement['name'],
         job_title=validated_placement['job_title'],
         start_date=validated_placement['start_date'],
@@ -249,8 +246,8 @@ def build_skill(validated_skill, user: User):
     skill = Skill(
         cai_hash=validated_skill['cai_hash'],
         #TODO fix reintroduced bug where object is nested under [skill] e.g. [skill][skill_name] think this only affects skills atm due to link_skills function / use case
-        skill_id = generate_id(validated_skill['skill_name'], dataclass_type.SKILL, user),
-        skill_name=validated_skill['skill_name'],
+        id = generate_id(validated_skill, dataclass_type.SKILL, user),
+        skill_name=validated_skill['name'],
         proficiency_level=validated_skill['proficiency_level'] if 'proficiency_level' in validated_skill else None,
         enjoyment_level=validated_skill['enjoyment_level'] if 'enjoyment_level' in validated_skill else None,
         tags=validated_skill['tags'] if 'tags' in validated_skill else None,
@@ -265,8 +262,8 @@ def build_skill(validated_skill, user: User):
 def build_project(validated_project, user: User):
     project = Project(
         cai_hash=validated_project['cai_hash'],
-        project_id = generate_id(validated_project['project_name'], dataclass_type.PROJECT, user),
-        project_name=validated_project['project_name'],
+        id = generate_id(validated_project, dataclass_type.PROJECT, user),
+        project_name=validated_project['name'],
         description=validated_project['description'],
         start_date=validated_project['start_date'] if 'start_date' in validated_project else None,
         end_date=validated_project['end_date'] if 'end_date' in validated_project else None,
@@ -280,7 +277,7 @@ def build_project(validated_project, user: User):
 def build_hobby(validated_hobby, user: User):
     hobby = Hobby(
         cai_hash = validated_hobby['cai_hash'],
-        hobby_id = generate_id(validated_hobby['hobby_name'], dataclass_type.HOBBY, user),
+        id = generate_id(validated_hobby, dataclass_type.HOBBY, user),
         hobby_name=validated_hobby['hobby_name'],
         description=validated_hobby['description'],
         related_skills=validated_hobby['related_skills'] if 'related_skills' in validated_hobby else {},
@@ -295,7 +292,7 @@ def build_hobby(validated_hobby, user: User):
 def build_qualification(validated_qualification, user: User):
     qualification = Qualification(
         cai_hash=validated_qualification['cai_hash'],
-        qualification_id = generate_id(validated_qualification['qualification_name'], dataclass_type.QUALIFICATION, user),
+        id = generate_id(validated_qualification, dataclass_type.QUALIFICATION, user),
         qualification_name=validated_qualification['qualification_name'],
         studied_at=validated_qualification['studied_at'],
         awarded_date=validated_qualification['awarded_date'],
@@ -312,7 +309,7 @@ def build_qualification(validated_qualification, user: User):
 def build_person(validated_person, user: User): #Validates and builds contact details within Person.
     validated_contact_data = validate_data(validated_person['contact_details'], dataclass_type.CONTACT_DETAILS, user)
     person = Person(
-        person_id = generate_id(validated_person['name'], dataclass_type.PERSON, user),
+        id = generate_id(validated_person, dataclass_type.PERSON, user),
         name=validated_person['name'],
         relation_type=validated_person['relation_type'],
         is_reference=validated_person['is_reference'],
@@ -353,12 +350,12 @@ people_data = parse_data("data/CV_Resources/AI_Example_data/people.yaml", datacl
 
 
 
-example_user.placements = {placement.placement_id: placement for placement in placements_data}
-#merge(example_user.skills, {skill.skill_id: skill for skill in skills_data})
-example_user.projects = {project.project_id: project for project in projects_data}
-example_user.hobbies = {hobby.hobby_id: hobby for hobby in hobbies_data}
-example_user.qualifications = {qualification.qualification_id: qualification for qualification in qualifications_data}
-example_user.people = {person.person_id: person for person in people_data}
+example_user.placements = {placement.id: placement for placement in placements_data}
+#merge(example_user.skills, {skill.id: skill for skill in skills_data})
+example_user.projects = {project.id: project for project in projects_data}
+example_user.hobbies = {hobby.id: hobby for hobby in hobbies_data}
+example_user.qualifications = {qualification.id: qualification for qualification in qualifications_data}
+example_user.people = {person.id: person for person in people_data}
 
     
 #endregion
