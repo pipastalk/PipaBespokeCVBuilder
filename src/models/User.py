@@ -13,20 +13,21 @@ class User:
         self.people = {}
 
     def add_data(self, data, d_type:dataclass_type):
-        if d_type == dataclass_type.SKILL:
-            self.skills[data.id] = data
-        elif d_type == dataclass_type.QUALIFICATION:
-            self.qualifications[data.id] = data
-        elif d_type == dataclass_type.PERSON:
-            self.people[data.id] = data
-        elif d_type == dataclass_type.PROJECT:
-            self.projects[data.id] = data
-        elif d_type == dataclass_type.PLACEMENT:
-            self.placements[data.id] = data
-        elif d_type == dataclass_type.HOBBY:
-            self.hobbies[data.id] = data
-        else:
-            raise ValueError(f"Unsupported dataclass type: {d_type}")
+        match d_type:
+            case dataclass_type.SKILL:
+                self.skills[data.id] = data
+            case dataclass_type.QUALIFICATION:
+                self.qualifications[data.id] = data
+            case dataclass_type.PERSON:
+                self.people[data.id] = data
+            case dataclass_type.PROJECT:
+                self.projects[data.id] = data
+            case dataclass_type.PLACEMENT:
+                self.placements[data.id] = data
+            case dataclass_type.HOBBY:
+                self.hobbies[data.id] = data
+            case _:
+                raise ValueError(f"Unsupported dataclass type: {d_type}")
     
     def get_dict(self, d_type:dataclass_type):
         match d_type:
@@ -58,8 +59,19 @@ class User:
         }
         unconverted_id = registry_map.get(d_type)
         id = str(unconverted_id).lower().replace(" ", "_") + "-" + d_type.value.upper() + data['cai_hash'][0:hash_suffix_length]
-        duplicate = self.get_dict(d_type).get(id)
+        duplicate = self.get_item(id, d_type)
         if duplicate:
             print(f"Warning: Duplicate ID generated for {d_type.value} with name '{data['name']}'.")
             raise ValueError(f"Duplicate entry found in {d_type.value}", duplicate.id)
         return id
+    
+    def get_item(self, item_id: str, d_type:dataclass_type): #should return item or None if not found
+        item = self.get_dict(d_type).get(item_id)
+        if not item:
+            #TODO logger this as warning
+            pass 
+        return item
+    
+
+#TODO add method to link_skill_to_dict e.g. projects/placements
+#TODO add in data tooling way to store unassigned items that can then be later processed

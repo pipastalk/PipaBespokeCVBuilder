@@ -221,6 +221,10 @@ def build_cai_hash(data):
     hash_obj = hashlib.sha256(data_str.encode('utf-8'))
     # Return the hex digest as the unique identifier
     return hash_obj.hexdigest()
+
+def merge_matched_data(data, cai_hash, dataclass_type: dataclass_type, user: User):
+    #DOING 
+    pass
 #endregion
 
 #region placements tools
@@ -302,7 +306,7 @@ def build_qualification(validated_qualification, user: User):
     )
     return qualification
 #endregion
-
+    
 #region people tools
 def build_person(validated_person, user: User): #Validates and builds contact details within Person.
     validated_contact_data = validate_data(validated_person['contact_details'], dataclass_type.CONTACT_DETAILS, user)
