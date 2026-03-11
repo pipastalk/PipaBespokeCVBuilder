@@ -43,33 +43,31 @@ def validate_data(data, dataclass_type, user):
     match dataclass_type:
         case dataclass_type.SKILL:
             required_fields = ['name','cai_hash']
-            working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.QUALIFICATION:
             required_fields = ['name', 'studied_at', 'awarded_date', 'related_skills','cai_hash']
-            working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.CONTACT_DETAILS:
             required_fields = ['name']
         case dataclass_type.PERSON:
             required_fields = ['name', 'relation_type', 'is_reference', 'cai_hash']
-            working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.PROJECT:
             required_fields = ['name', 'description','cai_hash']
-            working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.PLACEMENT:
             required_fields = ['name', 'job_title', 'start_date', 'related_skills','cai_hash']
-            working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.LOCATION:
             required_fields = ['city', 'country']
         # TODO impliment case dataclass_type.ADVERTSOURCE:
         # TODO impliment case dataclass_type.ADVERT:
         case dataclass_type.HOBBY:
             required_fields = ['name', 'description','cai_hash']
-            working_data['cai_hash'] = build_cai_hash(data)
         case _:
             raise ValueError("Invalid dataclass type provided for validation")
 
     if not working_data:
         raise ValueError("Placement was invalid, expected company as base field")
+    if not working_data.get('cai_hash'):
+        logger.warning(f"cai_hash not provided for {dataclass_type.value} with name {working_data['name']}, generating cai_hash")
+        #IMPORTANT use data not working_data to ensure original input is hashed
+        working_data['cai_hash'] = build_cai_hash(data) 
     for field in working_data:
         if field in required_fields:
             if not working_data[field] and (not isinstance(working_data[field], bool)): #to allow boolean false values to be valid
@@ -167,6 +165,7 @@ def parse_data(file_path, data_type: dataclass_type, user: User):
     if not finished_data:
          raise ValueError(f"No valid {data_type.value} entries found in file")
     return finished_data
+
 def check_for_duplicates(cai_hash, dataclass_type: dataclass_type, user: User): 
     #returns false if no duplicate, returns existing object if duplicate found. Searches via cai_hash not via id
     existing_matches = {}
@@ -209,6 +208,7 @@ def generate_id(data, dataclass_type: dataclass_type, user: User):
         return id
     logger.info(f"Duplicate found for {dataclass_type.value} with name {data['name']}, using existing id {dupe.__dict__.get(dataclass_type.value.lower() + '_id')}")
     raise ValueError(f"Duplicate entry found for {dataclass_type.value} with name {data['name']}, please use existing entry {dupe.id}")      
+
 def build_cai_hash(data):
     #Content-Addressable Identifier
     #build dict of all the data
@@ -358,7 +358,8 @@ example_user.people = {person.id: person for person in people_data}
 
 print("x")
 #endregion
-#TODO move cai_hash assignment into required fields checks
 #TODO when a match is found update any null field with existing ones
 #TODO handle generate_id duplicate id's better, currently a short hash could hit limits, not sure if we may hit an additional unhandled error that no more values in cai_hash
 #TODO sort the related_projects, related_placements, related_hobbies etc
+
+#TODO fix issue with results of parse_data, works for everything but skills atm but with circular it needs to write to the user not return the data
