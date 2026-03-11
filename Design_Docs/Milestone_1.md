@@ -6,12 +6,14 @@ MILESTONE 1
             spell data injestion right
             build a user object to store the CV data against
             put verification of data before a user is built
-        ---
-        [TODO]
             refactor data_ingestion parse/validates to use generics
-            create unit testing suit for data_ingestion
             create slug id's for projects, skills, qualifications,hobbies,people
             convert lists to dicts for better lookups (skills etc)
+        ---
+        [TODO]
+            refactor code so searches for id can be done by the schema class not by the data_ingestion tools directly
+            refactor code to use getattr instead of registry_map/configs
+            create unit testing suit for data_ingestion
         ---
 ____________________________________________________________________
             |                       |                       |
