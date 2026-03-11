@@ -1,3 +1,4 @@
+from heapq import merge
 import json #only used for CAI hasing as of 2026-03-10
 import hashlib
 import os
@@ -80,7 +81,8 @@ def validate_data(data, dataclass_type, user):
                 continue
         match field: 
             case "related_skills":
-                link_skills(working_data[field], dataclass_type, user)
+                related_skills = get_link_skills(working_data[field], dataclass_type, user)
+                validated_data[field] = related_skills
             case "related_projects":
                 ## TODO impliment project link
                 ##for project in working_data[field]:
@@ -91,9 +93,11 @@ def validate_data(data, dataclass_type, user):
                 validated_data[field] = working_data[field]
     return validated_data
 
-def link_skills(skill_data_list, dataclass_type, user: User):
+def get_link_skills(skill_data_list, dataclass_type, user: User):
     related_skillset = {}
-    #create skills if they do not exist, if they exist or not will always append to the skillset which is to later be added to relevent related_skills dicts
+    #create skills if they do not exist, 
+    if not skill_data_list:
+        return related_skillset
     for entry in skill_data_list:
         new_cai = build_cai_hash(entry)
         if len(user.skills) == 0: #always add if empty dict
@@ -101,29 +105,17 @@ def link_skills(skill_data_list, dataclass_type, user: User):
             user.skills[new_skill.skill_id] = new_skill
             related_skillset[new_skill.skill_id] = new_skill.skill_id
             continue
-        existing_skills = []
+        existing_skills = {}
         for k, skill in user.skills.items():
-            existing_skills.append(skill.cai_hash)    
+            existing_skills[skill.cai_hash] = skill
         if new_cai not in existing_skills:
             #validates, builds, then adds to skills list
             new_skill = build_skill(validate_data(entry, dataclass_type.SKILL, user), user)
             user.skills[new_skill.skill_id] = new_skill
         else:
-            new_skill = user.skills[entry.skill_id]
-            user.skills[entry.skill_id]
+            new_skill = existing_skills[new_cai]
         related_skillset[new_skill.skill_id] = new_skill.skill_id
-
-    registry_config = {
-        dataclass_type.PLACEMENT: {"id_field":'placement_id', "target_dict": user.placements},
-        dataclass_type.PROJECT: {"id_field":'project_id', "target_dict": user.projects},
-        dataclass_type.QUALIFICATION: {"id_field":'qualification_id', "target_dict": user.qualifications},
-        dataclass_type.HOBBY: {"id_field":'hobby_id', "target_dict": user.hobbies},
-    }
-    id_field = registry_config[dataclass_type]['id_field']
-    tar_dict = registry_config[dataclass_type]['target_dict']
-    for skill_id in related_skillset:
-        if id_field not in tar_dict:
-            tar_dict['related_skills'][skill_id] = user.skills[skill_id].skill_id
+    return related_skillset
 
 def convert_date(date_field):
     if not date_field:
@@ -138,7 +130,6 @@ def convert_date(date_field):
     return date_field
 
 def parse_data(file_path, data_type: dataclass_type, user: User):
-    #TODO correct yaml data to be uniform so no placement['company'] / skill difference in data then convert parses into using this shared helper.
     build = None
     finished_data = []
     match data_type:
@@ -177,6 +168,22 @@ def parse_data(file_path, data_type: dataclass_type, user: User):
     if not finished_data:
          raise ValueError(f"No valid {data_type.value} entries found in file")
     return finished_data
+def check_for_duplicates(cai_hash, dataclass_type: dataclass_type, user: User): 
+    #returns false if no duplicate, returns existing object if duplicate found. Searches via cai_hash not via id
+    existing_matches = {}
+    registry_map = {
+        dataclass_type.SKILL: user.skills,
+        dataclass_type.QUALIFICATION: user.qualifications,
+        dataclass_type.PROJECT: user.projects,
+        dataclass_type.PLACEMENT: user.placements,
+        dataclass_type.HOBBY: user.hobbies,
+        dataclass_type.PERSON: user.people
+    }
+    for k, v in registry_map.get(dataclass_type, {}).items():
+        existing_matches[v.cai_hash] = v
+    if cai_hash in existing_matches:
+        return existing_matches[cai_hash]
+    return False
 
 def generate_id(name: str, dataclass_type: dataclass_type, user: User):
     registry_map = {
@@ -213,7 +220,7 @@ def build_cai_hash(data):
     #hash string to create unique identifier for this data
     #return hash
     # Convert data to a canonical string (sorted keys for consistency)
-    data_str = json.dumps(data, sort_keys=True, separators=(',', ':'))
+    data_str = json.dumps(data, sort_keys=True, separators=(',', ':'), default=str) # default=str to handle non-serializable objects like dates
     # Hash the string using SHA-256
     hash_obj = hashlib.sha256(data_str.encode('utf-8'))
     # Return the hex digest as the unique identifier
@@ -347,11 +354,11 @@ people_data = parse_data("data/CV_Resources/AI_Example_data/people.yaml", datacl
 
 
 example_user.placements = {placement.placement_id: placement for placement in placements_data}
-example_user.skills = {skill.skill_id: skill for skill in skills_data}
+#merge(example_user.skills, {skill.skill_id: skill for skill in skills_data})
 example_user.projects = {project.project_id: project for project in projects_data}
 example_user.hobbies = {hobby.hobby_id: hobby for hobby in hobbies_data}
 example_user.qualifications = {qualification.qualification_id: qualification for qualification in qualifications_data}
 example_user.people = {person.person_id: person for person in people_data}
 
-print("X")
+    
 #endregion

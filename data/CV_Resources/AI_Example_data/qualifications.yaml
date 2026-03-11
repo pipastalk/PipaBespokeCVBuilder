@@ -3,12 +3,18 @@
 qualification_name: Bachelor of Science in Computer Science
 studied_at: University of Example
 grade: First Class Honours
-awarded_date: 2023-06-15
+awarded_date: 15-06-2023
 expiration_date: null
 related_skills:
-  - Programming
-  - Data Structures
-  - Algorithms
+  - 
+    skill_name: Programming
+    proficiency_level: null
+  - 
+    skill_name: Data Structures
+    proficiency_level: null
+  - 
+    skill_name: Algorithms
+    proficiency_level: null
 comment: "Focused on software development and machine learning modules."
 tags:
   - Education
@@ -21,9 +27,15 @@ grade: A*
 awarded_date: 2017-08-20
 expiration_date: null
 related_skills:
-  - Numeracy
-  - Problem Solving
-  - Logical Reasoning
+  - 
+    skill_name: Numeracy
+    proficiency_level: null
+  - 
+    skill_name: Problem Solving
+    proficiency_level: null
+  -
+    skill_name: Logical Reasoning
+    proficiency_level: null
 comment: "Achieved top grade in national exams."
 tags:
   - Education
@@ -36,24 +48,36 @@ grade: A
 awarded_date: 2019-08-15
 expiration_date: null
 related_skills:
-  - Analytical Thinking
-  - Experimentation
-  - Scientific Method
+  - 
+    skill_name: Analytical Thinking
+    proficiency_level: null
+  - 
+    skill_name: Experimentation
+    proficiency_level: null
+  - 
+    skill_name: Scientific Method
+    proficiency_level: null
 comment: "Completed advanced coursework and laboratory projects."
 tags:
   - Education
   - Physics
   - College
 ---
-qualification_name: AWS Certified Solutions Architect – Associate
+qualification_name: AWS Certified Solutions Architect - Associate
 studied_at: Amazon Web Services
 grade: Pass
 awarded_date: 2025-03-10
 expiration_date: 2028-03-10
 related_skills:
-  - Cloud Computing
-  - Solution Architecture
-  - AWS Services
+  - 
+    skill_name: Cloud Computing
+    proficiency_level: null
+  - 
+    skill_name: Solution Architecture
+    proficiency_level: null
+  - 
+    skill_name: AWS Services
+    proficiency_level: null
 comment: "Validated ability to design and deploy scalable systems on AWS."
 tags:
   - Certification
@@ -66,9 +90,15 @@ grade: Pass
 awarded_date: 2024-11-01
 expiration_date: 2027-11-01
 related_skills:
-  - Networking
-  - Troubleshooting
-  - Security
+  - 
+    skill_name: Networking
+    proficiency_level: null
+  - 
+    skill_name: Troubleshooting
+    proficiency_level: null
+  - 
+    skill_name: Security
+    proficiency_level: null
 comment: "Demonstrated knowledge of networking fundamentals and security."
 tags:
   - Certification
@@ -80,10 +110,17 @@ studied_at: Scrum.org
 grade: Pass
 awarded_date: 2022-05-12
 expiration_date: null
+
 related_skills:
-  - Agile Methodologies
-  - Team Leadership
-  - Project Management
+  - 
+    skill_name: Agile Methodologies
+    proficiency_level: null
+  - 
+    skill_name: Team Leadership
+    proficiency_level: null
+  - 
+    skill_name: Project Management
+    proficiency_level: null
 comment: "Certified in Scrum practices and agile project delivery."
 tags:
   - Certification
@@ -96,9 +133,15 @@ grade: Pass
 awarded_date: 2021-09-30
 expiration_date: null
 related_skills:
-  - IT Support
-  - Troubleshooting
-  - Customer Service
+  - 
+    skill_name: IT Support
+    proficiency_level: null
+  - 
+    skill_name: Troubleshooting
+    proficiency_level: null
+  - 
+    skill_name: Customer Service
+    proficiency_level: null
 # No comment, no tags
 ---
 qualification_name: First Aid at Work
@@ -107,8 +150,12 @@ grade: Pass
 awarded_date: 2020-04-15
 expiration_date: 2023-04-15
 related_skills:
-  - Emergency Response
-  - Communication
+- 
+  skill_name: Emergency Response
+  proficiency_level: null
+- 
+  skill_name: Communication
+  proficiency_level: null
 # No tags, no comment
 ---
 qualification_name: Diploma in Graphic Design
@@ -117,9 +164,15 @@ grade: Distinction
 awarded_date: 2022-07-01
 expiration_date: null
 related_skills:
-  - Design
-  - Creativity
-  - Digital Tools
+  - 
+    skill_name: Design
+    proficiency_level: null
+  - 
+    skill_name: Creativity
+    proficiency_level: null
+  - 
+    skill_name: Digital Tools
+    proficiency_level: null
 tags:
   - Art
   - Design
@@ -131,9 +184,15 @@ grade: Pass
 awarded_date: 2023-02-10
 expiration_date: 2026-02-10
 related_skills:
-  - Cloud Computing
-  - Azure
-  - Fundamentals
+  - 
+    skill_name: Cloud Computing
+    proficiency_level: null
+  - 
+    skill_name: Azure
+    proficiency_level: null
+  - 
+    skill_name: Fundamentals
+    proficiency_level: null
 comment: "Entry-level certification for cloud basics."
 # No tags
 ---
@@ -143,8 +202,12 @@ grade: Merit
 awarded_date: 2018-06-20
 expiration_date: null
 related_skills:
-  - General Education
-  - Study Skills
+  - 
+    skill_name: General Education
+    proficiency_level: null
+  - 
+    skill_name: Study Skills
+    proficiency_level: null
 tags:
   - School
   - Diploma
