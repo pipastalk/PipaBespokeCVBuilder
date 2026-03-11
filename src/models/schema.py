@@ -36,6 +36,7 @@ class ContactDetails:
     other_links: Optional[list[str]]
 @dataclass
 class Person:
+    cai_hash: str
     id: str
     name: str
     relation_type: str

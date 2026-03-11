@@ -38,33 +38,34 @@ def read_yaml_file(file_path):
         data = list(yaml.safe_load_all(file))
     return data
 
-def validate_data(data, dataclass_type, user):
+def validate_data(data, dataclass_type, user): #TODO move cai_hash assignment into required fields checks
     validated_data = {}
     working_data = data # can be overwritten by switch case if needed
     date_fields = ['start_date', 'end_date', 'awarded_date', 'expiration_date']
     match dataclass_type:
         case dataclass_type.SKILL:
-            required_fields = ['skill_name','cai_hash']
+            required_fields = ['name','cai_hash']
             working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.QUALIFICATION:
-            required_fields = ['qualification_name', 'studied_at', 'awarded_date', 'related_skills','cai_hash']
+            required_fields = ['name', 'studied_at', 'awarded_date', 'related_skills','cai_hash']
             working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.CONTACT_DETAILS:
             required_fields = ['name']
         case dataclass_type.PERSON:
-            required_fields = ['name', 'relation_type', 'is_reference']
+            required_fields = ['name', 'relation_type', 'is_reference', 'cai_hash']
+            working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.PROJECT:
-            required_fields = ['project_name', 'description','cai_hash']
+            required_fields = ['name', 'description','cai_hash']
             working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.PLACEMENT:
-            required_fields = ['company_name', 'job_title', 'start_date', 'related_skills','cai_hash']
+            required_fields = ['name', 'job_title', 'start_date', 'related_skills','cai_hash']
             working_data['cai_hash'] = build_cai_hash(data)
         case dataclass_type.LOCATION:
             required_fields = ['city', 'country']
         # TODO impliment case dataclass_type.ADVERTSOURCE:
         # TODO impliment case dataclass_type.ADVERT:
         case dataclass_type.HOBBY:
-            required_fields = ['hobby_name', 'description','cai_hash']
+            required_fields = ['name', 'description','cai_hash']
             working_data['cai_hash'] = build_cai_hash(data)
         case _:
             raise ValueError("Invalid dataclass type provided for validation")
@@ -245,7 +246,7 @@ def build_placement(validated_placement, user: User):
 def build_skill(validated_skill, user: User):
     skill = Skill(
         cai_hash=validated_skill['cai_hash'],
-        #TODO fix reintroduced bug where object is nested under [skill] e.g. [skill][skill_name] think this only affects skills atm due to link_skills function / use case
+        #TODO fix reintroduced bug where object is nested under [skill] e.g. [skill][name] think this only affects skills atm due to link_skills function / use case
         id = generate_id(validated_skill, dataclass_type.SKILL, user),
         skill_name=validated_skill['name'],
         proficiency_level=validated_skill['proficiency_level'] if 'proficiency_level' in validated_skill else None,
@@ -278,7 +279,7 @@ def build_hobby(validated_hobby, user: User):
     hobby = Hobby(
         cai_hash = validated_hobby['cai_hash'],
         id = generate_id(validated_hobby, dataclass_type.HOBBY, user),
-        hobby_name=validated_hobby['hobby_name'],
+        hobby_name=validated_hobby['name'],
         description=validated_hobby['description'],
         related_skills=validated_hobby['related_skills'] if 'related_skills' in validated_hobby else {},
         tags=validated_hobby['tags'] if 'tags' in validated_hobby else None,
@@ -293,7 +294,7 @@ def build_qualification(validated_qualification, user: User):
     qualification = Qualification(
         cai_hash=validated_qualification['cai_hash'],
         id = generate_id(validated_qualification, dataclass_type.QUALIFICATION, user),
-        qualification_name=validated_qualification['qualification_name'],
+        qualification_name=validated_qualification['name'],
         studied_at=validated_qualification['studied_at'],
         awarded_date=validated_qualification['awarded_date'],
         grade = validated_qualification['grade'],
@@ -309,6 +310,7 @@ def build_qualification(validated_qualification, user: User):
 def build_person(validated_person, user: User): #Validates and builds contact details within Person.
     validated_contact_data = validate_data(validated_person['contact_details'], dataclass_type.CONTACT_DETAILS, user)
     person = Person(
+        cai_hash=validated_person['cai_hash'],
         id = generate_id(validated_person, dataclass_type.PERSON, user),
         name=validated_person['name'],
         relation_type=validated_person['relation_type'],
