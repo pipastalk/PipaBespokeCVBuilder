@@ -72,6 +72,16 @@ class User:
             pass 
         return item
     
+    def set_link_skill_to_dict(self, skill_id: str, d_type:dataclass_type): #checks if skill exists and if link exists with dataclass. with no matches adds skill_id to dict
+        
+        skill = self.get_item(skill_id, dataclass_type.SKILL)
+        if d_type == dataclass_type.SKILL:
+            raise ValueError(f"Cannot link skill to skill {skill_id}.")
+        if not skill:
+            raise ValueError(f"Unable to link skill with ID as '{skill_id}' not found.")
+        existance_check = self.get_item(skill_id, d_type)
+        if existance_check:
+            raise ValueError(f"Link to skill: {skill_id} already exists in {d_type.value}")
+        self.get_dict(d_type)[skill_id] = skill_id    
 
-#TODO add method to link_skill_to_dict e.g. projects/placements
 #TODO add in data tooling way to store unassigned items that can then be later processed
