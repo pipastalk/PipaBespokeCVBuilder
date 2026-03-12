@@ -14,22 +14,19 @@ class User:
         self.people = {}
 
     def add_data(self, data, d_type:dataclass_type):
-        match d_type:
-            case dataclass_type.SKILL:
-                self.skills[data.id] = data
-            case dataclass_type.QUALIFICATION:
-                self.qualifications[data.id] = data
-            case dataclass_type.PERSON:
-                self.people[data.id] = data
-            case dataclass_type.PROJECT:
-                self.projects[data.id] = data
-            case dataclass_type.PLACEMENT:
-                self.placements[data.id] = data
-            case dataclass_type.HOBBY:
-                self.hobbies[data.id] = data
-            case _:
-                raise ValueError(f"Unsupported dataclass type: {d_type}")
-    
+        registry_map = {
+            dataclass_type.SKILL: self.skills,
+            dataclass_type.QUALIFICATION: self.qualifications,
+            dataclass_type.PERSON: self.people,
+            dataclass_type.PROJECT: self.projects,
+            dataclass_type.PLACEMENT: self.placements,
+            dataclass_type.HOBBY: self.hobbies,
+        }
+        d = registry_map[d_type]
+        pre_length = len(d)
+        d[data.id] = data
+        #TODO add logger to generic class so all can use it
+        logger.trace(f"Added {data.name} to {d_type.value} dictionary. previous length of dict {pre_length}, current legnth {len(d)}")
     def get_dict(self, d_type:dataclass_type):
         match d_type:
             case dataclass_type.SKILL:

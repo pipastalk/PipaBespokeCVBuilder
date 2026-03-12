@@ -40,57 +40,66 @@ def read_yaml_file(file_path):
 def validate_data(data,d_type:dataclass_type, user: User):
     #TODO check this item doesn't exist before validating everything?
     validated_data = {}
-    related_skills_data = None
-    related_projects_data = None
-    related_qualifications_data = None
-    related_placement_data = None
-    related_hobbies_data = None
-    related_data_registry_map = {
-        dataclass_type.SKILL: related_skills_data,
-        dataclass_type.PROJECT: related_projects_data,
-        dataclass_type.QUALIFICATION: related_qualifications_data,
-        dataclass_type.PLACEMENT: related_placement_data,
-        dataclass_type.HOBBY: related_hobbies_data,
-    }
     required_fields = get_required_fields(d_type)
     date_fields = ['start_date', 'end_date', 'awarded_date', 'expiration_date']
     if not data:
         raise ValueError("Placement was invalid, expected company as base field")
     if not data.get('cai_hash'):
         logger.warning(f"cai_hash not provided for {dataclass_type.value} with name {data['name']}, generating cai_hash")
-        data['cai_hash'] = build_cai_hash(data) 
+        data['cai_hash'] = build_cai_hash(data)  
     for field in required_fields:
         if not data[field]:
             logger.error(f"Required field is missing from data, field:{required_fields}")
             raise ValueError(f"Required field is missing from data, field:{required_fields}")
     for field in data:
-        match field:
+        if field in date_fields:
+            validated_data[field] = convert_date(data[field])
+            continue
+        match field: #TODO maybe change to registry map
             case "related_skills":
-                skills_data = create_missing_skills(data[field], user) #TODO link these skills after item is created
+                related_data = create_missing_related_items(data[field], dataclass_type.SKILL, user)
+                validated_data[field] = related_data
+                continue
             case "related_projects":
-                pass
+                related_data = create_missing_related_items(data[field], dataclass_type.PROJECT, user)
+                validated_data[field] = related_data
+                continue
             case "related_qualifications":
-                pass
+                related_data = create_missing_related_items(data[field], dataclass_type.QUALIFICATION, user)
+                validated_data[field] = related_data
+                continue
             case "related_placements":
-                pass
+                related_data = create_missing_related_items(data[field], dataclass_type.PLACEMENT, user)
+                validated_data[field] = related_data
+                continue
             case "related_hobbies":
-                pass
+                related_data = create_missing_related_items(data[field], dataclass_type.HOBBY, user)
+                validated_data[field] = related_data
+                continue
             case _:
                 validated_data[field] = data[field]
-    return validated_data, related_data_registry_map
+    return validated_data
 
-def create_missing_skills(data: list, user:User):
-    skills_data = []
-    for skill in data:
-        skill_cai_hash = build_cai_hash(skill)
-        skill_item = None
-        if not skill_cai_hash:
-            skill_item = build_skill(validate_data(skill, dataclass_type.SKILL, user), user)
-            #TODO make sure build always adds to user dict
-        else:
-            skill_item = user.get_item(skill,dataclass_type.SKILL)
-        skills_data.append(skill_item.get('id')) #ignore warning
-    return skills_data
+def create_missing_related_items(data: list, d_type: dataclass_type, user: User):
+    items_data = []
+    registry_map = {
+        dataclass_type.PROJECT: build_project,
+        dataclass_type.PLACEMENT: build_placement,
+        dataclass_type.QUALIFICATION: build_qualification,
+        dataclass_type.HOBBY: build_hobby,
+        dataclass_type.SKILL: build_skill
+    }
+    build = registry_map[d_type]
+    for item in data:
+        item_cai_hash = build_cai_hash(item)
+        item_object = user.hash_search(item_cai_hash)
+        if not item_object:
+            item_object = build(validate_data(item, d_type, user), user)
+        item_id = item_object.get('id')
+        if not user.get_item(item_id, d_type): # case is item exists but not within the dict for this dataclass
+            raise ValueError("Wrong dataclass_type for the item") #TODO better exception
+        items_data.append(item_id)
+    return items_data
         
 def get_required_fields(d_type:dataclass_type):
     match dataclass_type:
@@ -152,10 +161,9 @@ def convert_date(date_field):
             raise ValueError(f"date entered as a string with invalid date format, expected DD-MM-YYYY")
     return date_field
 
-def parse_data(file_path, data_type: dataclass_type, user: User):
-    build = None
-    finished_data = []
-    match data_type:
+def parse_data(file_path, d_type: dataclass_type, user: User):
+
+    match d_type:
         case dataclass_type.PERSON:
             build = build_person
         case dataclass_type.PLACEMENT:
@@ -176,21 +184,15 @@ def parse_data(file_path, data_type: dataclass_type, user: User):
     
     file_data = read_yaml_file(file_path)
     for entry in file_data:
-        logger.info(f"Parsing {data_type.value} entry: {entry}")
+        logger.info(f"Parsing {d_type.value} entry: {entry}")
         if not entry:
-            raise ValueError(f"Empty entry found in {data_type.value} file, please ensure all entries have data. .yaml files should not end in ---")
-        
-        
-        validated_data = validate_data(entry, data_type, user)
+            raise ValueError(f"Empty entry found in {d_type.value} file, please ensure all entries have data. .yaml files should not end in ---") ##TODO could doa silent error
+        validated_data = validate_data(entry, d_type, user)
         if build:
             finished_entry = build(validated_data, user)
-            finished_data.append(finished_entry)
+            user.add_data(finished_entry, d_type)
         else:
-            raise NotImplementedError(f"No build function implemented for {data_type.value}")
-        
-    if not finished_data:
-         raise ValueError(f"No valid {data_type.value} entries found in file")
-    return finished_data
+            raise NotImplementedError(f"No build function implemented for {d_type.value}")
 
 def check_for_duplicates(cai_hash, dataclass_type: dataclass_type, user: User): 
     #returns false if no duplicate, returns existing object if duplicate found. Searches via cai_hash not via id
@@ -387,6 +389,9 @@ example_user.qualifications = {qualification.id: qualification for qualification
 example_user.people = {person.id: person for person in people_data}
 
 print("x")
+
+#SIGNOFF currently parse should go via validate, build any related_items that are not existant yet and place them onto user dicts, then build the parent item which related field should be a list of id's. 
+#TODO that list of ID's for related should probably be a dict for user search functions, maybe id:cai
 #endregion
 #TODO when a match is found update any null field with existing ones
 #TODO handle generate_id duplicate id's better, currently a short hash could hit limits, not sure if we may hit an additional unhandled error that no more values in cai_hash
