@@ -8,6 +8,7 @@ from enum import Enum
 from datetime import datetime, date
 from schema import *
 from User import User
+from exceptions.user_exceptions import *
 #region logging setup
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -36,10 +37,62 @@ def read_yaml_file(file_path):
         data = list(yaml.safe_load_all(file))
     return data
 
-def validate_data(data, dataclass_type, user): 
+def validate_data(data,d_type:dataclass_type, user: User):
+    #TODO check this item doesn't exist before validating everything?
     validated_data = {}
-    working_data = data # can be overwritten by switch case if needed
+    related_skills_data = None
+    related_projects_data = None
+    related_qualifications_data = None
+    related_placement_data = None
+    related_hobbies_data = None
+    related_data_registry_map = {
+        dataclass_type.SKILL: related_skills_data,
+        dataclass_type.PROJECT: related_projects_data,
+        dataclass_type.QUALIFICATION: related_qualifications_data,
+        dataclass_type.PLACEMENT: related_placement_data,
+        dataclass_type.HOBBY: related_hobbies_data,
+    }
+    required_fields = get_required_fields(d_type)
     date_fields = ['start_date', 'end_date', 'awarded_date', 'expiration_date']
+    if not data:
+        raise ValueError("Placement was invalid, expected company as base field")
+    if not data.get('cai_hash'):
+        logger.warning(f"cai_hash not provided for {dataclass_type.value} with name {data['name']}, generating cai_hash")
+        data['cai_hash'] = build_cai_hash(data) 
+    for field in required_fields:
+        if not data[field]:
+            logger.error(f"Required field is missing from data, field:{required_fields}")
+            raise ValueError(f"Required field is missing from data, field:{required_fields}")
+    for field in data:
+        match field:
+            case "related_skills":
+                skills_data = create_missing_skills(data[field], user) #TODO link these skills after item is created
+            case "related_projects":
+                pass
+            case "related_qualifications":
+                pass
+            case "related_placements":
+                pass
+            case "related_hobbies":
+                pass
+            case _:
+                validated_data[field] = data[field]
+    return validated_data, related_data_registry_map
+
+def create_missing_skills(data: list, user:User):
+    skills_data = []
+    for skill in data:
+        skill_cai_hash = build_cai_hash(skill)
+        skill_item = None
+        if not skill_cai_hash:
+            skill_item = build_skill(validate_data(skill, dataclass_type.SKILL, user), user)
+            #TODO make sure build always adds to user dict
+        else:
+            skill_item = user.get_item(skill,dataclass_type.SKILL)
+        skills_data.append(skill_item.get('id')) #ignore warning
+    return skills_data
+        
+def get_required_fields(d_type:dataclass_type):
     match dataclass_type:
         case dataclass_type.SKILL:
             required_fields = ['name','cai_hash']
@@ -61,34 +114,7 @@ def validate_data(data, dataclass_type, user):
             required_fields = ['name', 'description','cai_hash']
         case _:
             raise ValueError("Invalid dataclass type provided for validation")
-
-    if not working_data:
-        raise ValueError("Placement was invalid, expected company as base field")
-    if not working_data.get('cai_hash'):
-        logger.warning(f"cai_hash not provided for {dataclass_type.value} with name {working_data['name']}, generating cai_hash")
-        #IMPORTANT use data not working_data to ensure original input is hashed
-        working_data['cai_hash'] = build_cai_hash(data) 
-    for field in working_data:
-        if field in required_fields:
-            if not working_data[field] and (not isinstance(working_data[field], bool)): #to allow boolean false values to be valid
-                raise ValueError(f"No {field} in placement company")
-        if field in date_fields:
-                date = convert_date(working_data[field])
-                validated_data[field] = date
-                continue
-        match field: 
-            case "related_skills":
-                related_skills = get_link_skills(working_data[field], dataclass_type, user)
-                validated_data[field] = related_skills
-            case "related_projects":
-                ## TODO impliment project link
-                ##for project in working_data[field]:
-                ##    if project not in user.projects:
-                ##        user.projects.append(build_project())
-                pass
-            case _:
-                validated_data[field] = working_data[field]
-    return validated_data
+    return required_fields
 
 def get_link_skills(skill_data_list, dataclass_type, user: User):
     related_skillset = {}

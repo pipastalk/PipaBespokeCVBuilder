@@ -1,6 +1,7 @@
-import data
+
 from models.data_ingestion import dataclass_type
 from schema import *
+from exceptions.user_exceptions import *
 class User:
     def __init__(self, name: str, email = None, phone_number = None, linkedin = None, github = None, other_links = None):
         contact_details = ContactDetails(name=name, email=email, phone_number=phone_number, linkedin=linkedin, github=github, other_links=other_links) #TODO 
@@ -72,16 +73,36 @@ class User:
             pass 
         return item
     
-    def set_link_skill_to_dict(self, skill_id: str, d_type:dataclass_type): #checks if skill exists and if link exists with dataclass. with no matches adds skill_id to dict
-        
+    def set_link_skill_to_item(self,item_id: str, skill_id: str, d_type:dataclass_type): #checks if skill exists and if link exists with dataclass. with no matches adds skill_id to dict  
+        item = self._validate_link_data(item_id, skill_id, d_type)
+        item['related_skills'][skill_id] = skill_id  
+    
+    def _validate_link_data(self, item_id: str, skill_id: str, d_type:dataclass_type): #helper for set_link_skill_to_item
+        item = self.get_item(item_id, d_type)
+        if not item:
+            raise ItemNotFoundInUserDict(item_id, d_type)
         skill = self.get_item(skill_id, dataclass_type.SKILL)
-        if d_type == dataclass_type.SKILL:
-            raise ValueError(f"Cannot link skill to skill {skill_id}.")
         if not skill:
-            raise ValueError(f"Unable to link skill with ID as '{skill_id}' not found.")
-        existance_check = self.get_item(skill_id, d_type)
-        if existance_check:
-            raise ValueError(f"Link to skill: {skill_id} already exists in {d_type.value}")
-        self.get_dict(d_type)[skill_id] = skill_id    
+            raise SkillNotFoundInUserDict(skill_id,d_type)
+        existing_skill_check = item.get_item(skill_id, d_type)
+        if existing_skill_check:
+            raise SkillLinkAlreadyExists(skill_id, item_id)
+        return item
+
+    def hash_search(self, cai_hash):
+        reigtry_map = [
+            (dataclass_type.SKILL, self.skills),
+            (dataclass_type.QUALIFICATION, self.qualifications),
+            (dataclass_type.PROJECT, self.projects),
+            (dataclass_type.PLACEMENT, self.placements),
+            (dataclass_type.HOBBY, self.hobbies),
+            (dataclass_type.PERSON, self.people),
+        ]
+        for d_type, d in reigtry_map:
+            for k, v in d.items():
+                if v.get('cai_hash') == cai_hash:
+                    return v, d_type
+        return None
+
 
 #TODO add in data tooling way to store unassigned items that can then be later processed
