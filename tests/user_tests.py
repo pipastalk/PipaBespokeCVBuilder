@@ -1,8 +1,10 @@
 import unittest
+from datetime import date
+
 from src.models.User import User
 from src.models.data_ingestion import dataclass_type
 from src.models.schema import *
-from datetime import date, datetime
+
 test_values = {
     "name" : "Test User",
     "email": "notAnEmail@email.com", 
@@ -65,9 +67,6 @@ test_values = {
 		comment=None
 	)
 }
-starting = "----------------------STARTING----------------------"
-line_break = "___________________________________________________"
-ending = "--------------------------ENDED-----------------------"
 	
 class Test_User(unittest.TestCase):
 
@@ -102,7 +101,6 @@ class Test_User(unittest.TestCase):
 	def build_bad_user(self, test_values):
 		msg = "Testing build_bad_user"
 		self.print_start(msg)
-		print(f"{starting}\n{msg}\n{line_break}")
 		with self.assertRaises(ValueError):
 			user = User(name=None) # type: ignore
 		with self.assertRaises(ValueError):

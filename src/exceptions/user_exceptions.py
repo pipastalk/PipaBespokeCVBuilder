@@ -1,6 +1,6 @@
-
-from models.data_ingestion import dataclass_type
 import logging
+
+from src.models.dataclass_type import dataclass_type 
 
 #region logging setup
 logger = logging.getLogger(__name__)
@@ -35,4 +35,3 @@ class SkillLinkAlreadyExists(ValueError):
         self.message = f"Skill with ID '{skill_id}' is already linked to item with ID '{item_id}'."
         logger.log(log_level, self.message)
         super().__init__(self.message)
-        

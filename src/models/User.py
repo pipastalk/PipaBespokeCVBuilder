@@ -1,7 +1,6 @@
-
-from models.data_ingestion import dataclass_type
-from schema import *
-from exceptions.user_exceptions import *
+from src.models.schema import *
+from src.exceptions.user_exceptions import *
+from src.models.dataclass_type import dataclass_type
 
 #region logging setup
 logger = logging.getLogger(__name__)

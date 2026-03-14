@@ -1,14 +1,15 @@
-from heapq import merge
 import json #only used for CAI hasing as of 2026-03-10
 import hashlib
 import os
 import yaml
 import logging
-from enum import Enum
 from datetime import datetime, date
-from schema import *
-from User import User
-from exceptions.user_exceptions import *
+
+from src.models.dataclass_type import dataclass_type
+from src.models.schema import *
+from src.models.User import User
+from src.exceptions.user_exceptions import *
+
 
 #region logging setup
 logger = logging.getLogger(__name__)
@@ -23,17 +24,7 @@ logger.addHandler(local)
 #endregion
 
 #region generic tools
-class dataclass_type(Enum):
-    SKILL = "Skill"
-    QUALIFICATION = "Qualification"
-    CONTACT_DETAILS = "ContactDetails"
-    PERSON = "Person"
-    PROJECT = "Project"
-    PLACEMENT = "Placement"
-    LOCATION = "Location"
-    ADVERTSOURCE = "AdvertSource"
-    ADVERT = "Advert"
-    HOBBY = "Hobby"
+
 
 def read_yaml_file(file_path):
     if not os.path.exists(file_path):
