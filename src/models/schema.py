@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import date, datetime
 from enum import Enum
 from typing import Optional
 
@@ -10,7 +10,7 @@ class Skill:
     cai_hash: str
     proficiency_level: Optional[str]
     enjoyment_level: Optional[int] # how much do I enjoy this skill, could do with better name
-    tags: Optional[list[str]]
+    tags: set[str] = field(default_factory=set)
     related_placements: Optional[dict[str, "Placement"]]
     related_projects: Optional[dict[str, "Project"]]
     related_qualifications: Optional[dict[str, "Qualification"]]
@@ -22,7 +22,7 @@ class Qualification:
     awarded_date: datetime
     cai_hash: str
     related_skills: dict[str,"Skill"]
-    tags: Optional[list[str]]
+    tags: set[str] = field(default_factory=set)
     grade: Optional[str]
     expiration_date: Optional[datetime] # for qualifications that expire, e.g. first aid, cpr, etc.
     comment: Optional[str]
@@ -58,13 +58,13 @@ class Placement:
     id: str
     company_name: str
     job_title: str
-    start_date: datetime
+    start_date: date
     cai_hash: str
-    end_date: Optional[datetime]
-    project_references: Optional[dict[str, "Project"]]
-    reference_contacts: Optional[dict[str, "Person"]]
-    related_skills: Optional[dict[str, "Skill"]]
+    end_date: date
     reason_for_leaving: Optional[str]
+    project_references: set[str] = field(default_factory=set)
+    reference_contacts: set[str] = field(default_factory=set)
+    related_skills: set[str] = field(default_factory=set)
 @dataclass
 class Location:
     city: str #Will accept Remote/Home as a city
@@ -95,6 +95,6 @@ class Hobby:
     description: str
     cai_hash: str
     related_skills: Optional[dict[str, "Skill"]]
-    tags: Optional[list[str]]
+    tags: set[str] = field(default_factory=set)
     awards_or_accolades: Optional[list[str]]
     comment: Optional[str]

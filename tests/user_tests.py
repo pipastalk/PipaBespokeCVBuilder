@@ -1,5 +1,4 @@
 import unittest
-from models.schema import * 
 from src.models.User import User
 from src.models.data_ingestion import dataclass_type
 from src.models.schema import *
@@ -65,10 +64,24 @@ test_values = {
 		comment=None
 	)
 }
-
+starting = "----------------------STARTING----------------------"
+line_break = "___________________________________________________"
+ending = "--------------------------ENDED-----------------------"
+	
 class Test_User(unittest.TestCase):
 
+	def print_start(msg):
+		starting = "----------------------STARTING----------------------"
+		line_break = "___________________________________________________"
+		print(f"{starting}\n{msg}\n{line_break}")
+	def print_end(msg):
+		line_break = "___________________________________________________"
+		ending = "--------------------------ENDED-----------------------"
+		print(f"{line_break}\n{msg}\n{ending}")
+
 	def build_user_min_requirements(self, test_values):
+		msg = "Testing build_user_min_requirements"
+		print_start(msg)
 		user = User(name=test_values['name'])
 		value_is_name_checks = [user.person.name, user.contact_details.name]
 		value_is_dict_checks = [user.skills, user.qualifications, user.projects, user.placements, user.hobbies, user.people]
@@ -80,11 +93,15 @@ class Test_User(unittest.TestCase):
 		for value in value_is_name_checks:{
 			self.assertEqual(value, test_values['name'])
 		}
-	
+		print_end(msg)	
+
 	def build_user_all_fields(self, test_values):
 		pass
 
 	def build_bad_user(self, test_values):
+		msg = "Testing build_bad_user"
+		print_start(msg)
+		print(f"{starting}\n{msg}\n{line_break}")
 		with self.assertRaises(ValueError):
 			user = User(name=None)
 		with self.assertRaises(ValueError):
@@ -93,8 +110,10 @@ class Test_User(unittest.TestCase):
 			user = User(name=1)
 		with self.assertRaises(ValueError):
 			user = User(name=["nested_string"])
-	
+		print_end(msg)
 	def test_generate_id(self, test_values):
+		msg = "Build test_generate_id"
+		print_start(msg)
 		# expected_id should be manually set to the passed in dict, not within this function
 		#(test_data, type, expected id,)
 		expected_results = [ 
@@ -108,8 +127,11 @@ class Test_User(unittest.TestCase):
 		for data, d_type, expected_id in expected_results:
 			result = User.generate_id(data, d_type)
 			self.assertEqual(result, expected_id, f"Failed to generate accurate expected_id. \n {d_type.value} name: {data['name']}\n generated_result: {result}\n expected result: {expected_id}")
+		print_end(msg)
 
 	def test_add_data(self,test_values):
+		msg = "Testing test_add_data"
+		print_start(msg)
 		#data, type. target
 		user = User(name=test_values['name'])
 		expected_results = [
@@ -124,8 +146,11 @@ class Test_User(unittest.TestCase):
 		for data, d_type, target in expected_results:
 			user.add_data(data, d_type)
 			self.assertIs(target, data, f"Failed to add {d_type.value} to user")
-		
+		print_end(msg)
+
 	def test_get_dict(self):
+		msg = "Testing test_get_dict"
+		print_start(msg)
 		user = User(name=test_values['name'])
 		expected_results = [
 			(dataclass_type.SKILL, user.skills),
@@ -138,8 +163,11 @@ class Test_User(unittest.TestCase):
 		for d_type, tar_dict in expected_results:
 			result = user.get_dict(d_type),
 			self.assertIs(result, tar_dict, f"Failed to get correct dict for {d_type.value}")
+		print_end(msg)
 
 	def test_get_item(self):
+		msg = "Testing test_get_item"
+		print_start(msg)
 		user = User(name=test_values['name'])
 		expected_results = [
 			(test_values['skill'][id], dataclass_type.SKILL, user.skills,test_values['skill']),
@@ -153,8 +181,11 @@ class Test_User(unittest.TestCase):
 			tar_dict[data] = expected_result #manual add of item
 			result = user.get_item(data, d_type)
 			self.assertIs(result, expected_result, f"Failed to get correct item for {d_type.value} with id {data}")
+		print_end(msg)
 
 	def test_hash_search(self, test_values):
+		msg = "Test test_hash_search"
+		print_start(msg)
 		#search_data, expected_results(object, object_type)
 		expected_results = [
 			(test_values['skill']['cai_hash'], (test_values['skill'], dataclass_type.SKILL)),
@@ -176,8 +207,11 @@ class Test_User(unittest.TestCase):
 			result = user.hash_search(search_data)
 			self.assertEqual(result, "Failed to find item with cai_hash search")
 			self.assertIs(result, expected_result, f"search by cai hash failed to retrieve right item\nresult: NAME-{result[0]['name']} TYPE-{result[1]}\nexpected_result: NAME-{expected_result[0]['name'], TYPE-expected_result[1]}\nsearch data:{search_data}")
+		print_end(msg)
 
 	def test_set_link_skill_to_item(self):
+		msg = "Testing test_set_link_skill_to_item"
+		print_start(msg)
 		#target_data, skill_to_link, item_type
 		expected_results = [
 			(test_values['project']['id'], test_values['skill']['id'], dataclass_type.PROJECT),
@@ -196,7 +230,7 @@ class Test_User(unittest.TestCase):
 			user.set_link_skill_to_item(target_data, skill_to_link, item_type)
 			item = user.get_item(target_data, item_type)
 			self.assertIn(skill_to_link, item['related_skills'], f"Failed to link skill {skill_to_link} to {item_type.value} with id {target_data}")
-
+		print_end(msg)
 
 
 
