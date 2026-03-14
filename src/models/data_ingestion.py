@@ -13,14 +13,6 @@ from src.exceptions.user_exceptions import *
 
 #region logging setup
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-full_handler = logging.FileHandler("data/logs/full.log")
-local = logging.FileHandler("data/logs/data_ingestion.log")
-logformat = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
-local.setFormatter(logformat)
-full_handler.setFormatter(logformat)
-logger.addHandler(full_handler)
-logger.addHandler(local)
 #endregion
 
 #region generic tools
@@ -41,7 +33,7 @@ def validate_data(data,d_type:dataclass_type, user: User):
     if not data:
         raise ValueError("Placement was invalid, expected company as base field")
     if not data.get('cai_hash'):
-        logger.warning(f"cai_hash not provided for {dataclass_type.value} with name {data['name']}, generating cai_hash")
+        logger.warning(f"cai_hash not provided for {d_type.value} with name {data['name']}, generating cai_hash")
         data['cai_hash'] = build_cai_hash(data)  
     for field in required_fields:
         if not data[field]:
@@ -98,7 +90,7 @@ def create_missing_related_items(data: list, d_type: dataclass_type, user: User)
     return items_data
         
 def get_required_fields(d_type:dataclass_type):
-    match dataclass_type:
+    match d_type:
         case dataclass_type.SKILL:
             required_fields = ['name','cai_hash']
         case dataclass_type.QUALIFICATION:
@@ -360,7 +352,7 @@ def build_contact_details(validated_contact_details):
     return contact_details
 #endregion
 
-
+"""
 #region scratch testing
 example_user = User(
     name="Pippa",
@@ -374,10 +366,7 @@ projects_data = parse_data("data/CV_Resources/Personal/projects.yaml", dataclass
 hobbies_data = parse_data("data/CV_Resources/AI_Example_data/hobbies.yaml", dataclass_type.HOBBY, example_user)
 qualifications_data = parse_data("data/CV_Resources/AI_Example_data/qualifications.yaml", dataclass_type.QUALIFICATION, example_user)
 people_data = parse_data("data/CV_Resources/AI_Example_data/people.yaml", dataclass_type.PERSON, example_user)
-
-
-
-print("x")
+"""
 
 #TODO that list of ID's for related should probably be a dict for user search functions, maybe id:cai
 #endregion
