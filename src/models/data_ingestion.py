@@ -97,11 +97,11 @@ def create_missing_related_items(data: list, d_type: dataclass_type, user: User)
     build = registry_map[d_type]
     for item in data:
         item_cai_hash = build_cai_hash(item)
-        item_object = user.hash_search(item_cai_hash)
+        item_object = user.hash_search(item_cai_hash) #returns tuple of item, dataclass_type or None if not found
         if not item_object:
             item_object = build(validate_data(item, d_type, user), user)
-        item_id = item_object.get('id')
-        if not user.get_item(item_id, d_type): # case is item exists but not within the dict for this dataclass
+        item_id = item_object[0].id
+        if not user.get_item(item_id, d_type): # check for item exists but not within the dict for this dataclass. e.g. Project cai_hash in user.placements set
             raise ValueError("Wrong dataclass_type for the item") #TODO better exception
         items_data.append(item_id)
     return items_data
@@ -269,9 +269,9 @@ def build_placement(validated_placement, user: User):
         job_title=validated_placement['job_title'],
         start_date=validated_placement['start_date'],
         end_date=validated_placement.get('end_date'),
-        project_references=validated_placement['related_projects'] if 'related_projects' in validated_placement else {},
-        reference_contacts=validated_placement['reference_contacts'] if 'reference_contacts' in validated_placement else {},
-        related_skills=validated_placement['related_skills'] if 'related_skills' in validated_placement else {},
+        project_references=validated_placement['related_projects'] if 'related_projects' in validated_placement else set(),
+        reference_contacts=validated_placement['reference_contacts'] if 'reference_contacts' in validated_placement else set(),
+        related_skills=validated_placement['related_skills'] if 'related_skills' in validated_placement else set(),
         reason_for_leaving=validated_placement['reason_for_leaving'] if 'reason_for_leaving' in validated_placement else None,
     )
     return placement
@@ -285,10 +285,10 @@ def build_skill(validated_skill, user: User):
         skill_name=validated_skill['name'],
         proficiency_level=validated_skill['proficiency_level'] if 'proficiency_level' in validated_skill else None,
         enjoyment_level=validated_skill['enjoyment_level'] if 'enjoyment_level' in validated_skill else None,
-        tags=validated_skill['tags'] if 'tags' in validated_skill else [],
-        related_placements=validated_skill['related_placements'] if 'related_placements' in validated_skill else {},
-        related_projects=validated_skill['related_projects'] if 'related_projects' in validated_skill else None,
-        related_qualifications=validated_skill['related_qualifications'] if 'related_qualifications' in validated_skill else None,
+        tags=validated_skill['tags'] if 'tags' in validated_skill else set(),
+        related_placements=validated_skill['related_placements'] if 'related_placements' in validated_skill else set(),
+        related_projects=validated_skill['related_projects'] if 'related_projects' in validated_skill else set(),
+        related_qualifications=validated_skill['related_qualifications'] if 'related_qualifications' in validated_skill else set(),
     )
     return skill
 #endregion
@@ -302,7 +302,7 @@ def build_project(validated_project, user: User):
         description=validated_project['description'],
         start_date=validated_project['start_date'] if 'start_date' in validated_project else None,
         end_date=validated_project['end_date'] if 'end_date' in validated_project else None,
-        related_skills=validated_project['related_skills'] if 'related_skills' in validated_project else {},
+        related_skills=validated_project['related_skills'] if 'related_skills' in validated_project else set(),
         comment=validated_project['comment'] if 'comment' in validated_project else None,
     )
     return project
@@ -315,9 +315,9 @@ def build_hobby(validated_hobby, user: User):
         id = generate_id(validated_hobby, dataclass_type.HOBBY, user),
         hobby_name=validated_hobby['name'],
         description=validated_hobby['description'],
-        related_skills=validated_hobby['related_skills'] if 'related_skills' in validated_hobby else {},
-        tags=validated_hobby['tags'] if 'tags' in validated_hobby else None,
-        awards_or_accolades=validated_hobby['awards_or_accolades'] if 'awards_or_accolades' in validated_hobby else None,
+        related_skills=validated_hobby['related_skills'] if 'related_skills' in validated_hobby else set(),
+        tags=validated_hobby['tags'] if 'tags' in validated_hobby else set(),
+        awards_or_accolades=validated_hobby['awards_or_accolades'] if 'awards_or_accolades' in validated_hobby else set(),
         comment=validated_hobby['comment'] if 'comment' in validated_hobby else None,
     )
     return hobby
@@ -332,8 +332,8 @@ def build_qualification(validated_qualification, user: User):
         studied_at=validated_qualification['studied_at'],
         awarded_date=validated_qualification['awarded_date'],
         grade = validated_qualification['grade'],
-        related_skills=validated_qualification['related_skills'] if 'related_skills' in validated_qualification else {},
-        tags=validated_qualification['tags'] if 'tags' in validated_qualification else [],
+        related_skills=validated_qualification['related_skills'] if 'related_skills' in validated_qualification else set(),
+        tags=validated_qualification['tags'] if 'tags' in validated_qualification else set(),
         expiration_date=validated_qualification['expiration_date'] if 'expiration_date' in validated_qualification else None,
         comment=validated_qualification['comment'] if 'comment' in validated_qualification else None,
     )

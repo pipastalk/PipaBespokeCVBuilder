@@ -73,7 +73,7 @@ class User:
             dataclass_type.PERSON: data['cai_hash']
         }
         unconverted_id = registry_map.get(d_type)
-        id = str(unconverted_id).lower().replace(" ", "_") + "-" + d_type.value.upper() + data['cai_hash'][0:hash_suffix_length]
+        id = str(unconverted_id).lower().replace(" ", "_") + data['cai_hash'][0:hash_suffix_length] + "-" + d_type.value.upper()
         duplicate = self.get_item(id, d_type)
         if duplicate:
             print(f"Warning: Duplicate ID generated for {d_type.value} with name '{data['name']}'.")
@@ -85,7 +85,7 @@ class User:
         if not item:
             #TODO logger this as warning
             ItemNotFoundInUserDict(item_id, d_type)
-            pass 
+            return None 
         return item
     
     def set_link_skill_to_item(self,item_id: str, skill_id: str, d_type:dataclass_type): #checks if skill exists and if link exists with dataclass. with no matches adds skill_id to dict  

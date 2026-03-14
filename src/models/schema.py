@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date
 from enum import Enum
 from typing import Optional
 
@@ -19,10 +19,10 @@ class Qualification:
     id: str
     qualification_name: str
     studied_at: str
-    awarded_date: datetime
+    awarded_date: date
     cai_hash: str
     grade: Optional[str]
-    expiration_date: Optional[datetime] # for qualifications that expire, e.g. first aid, cpr, etc.
+    expiration_date: Optional[date] # for qualifications that expire, e.g. first aid, cpr, etc.
     comment: Optional[str]
     related_skills: set[str] = field(default_factory=set)
     tags: set[str] = field(default_factory=set)
@@ -49,8 +49,8 @@ class Project:
     project_name: str
     description: str
     cai_hash: str
-    start_date: Optional[datetime]
-    end_date: Optional[datetime]
+    start_date: Optional[date]
+    end_date: Optional[date]
     comment: Optional[str]
     related_skills: set[str] = field(default_factory=set)
 @dataclass
