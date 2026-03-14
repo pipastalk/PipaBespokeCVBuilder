@@ -178,7 +178,24 @@ class Test_User(unittest.TestCase):
 			self.assertIs(result, expected_result, f"search by cai hash failed to retrieve right item\nresult: NAME-{result[0]['name']} TYPE-{result[1]}\nexpected_result: NAME-{expected_result[0]['name'], TYPE-expected_result[1]}\nsearch data:{search_data}")
 
 	def test_set_link_skill_to_item(self):
-		pass
+		#target_data, skill_to_link, item_type
+		expected_results = [
+			(test_values['project']['id'], test_values['skill']['id'], dataclass_type.PROJECT),
+			(test_values['placement']['id'], test_values['skill']['id'], dataclass_type.PLACEMENT),
+			(test_values['qualification']['id'], test_values['skill']['id'], dataclass_type.QUALIFICATION),
+			(test_values['hobby']['id'], test_values['skill']['id'], dataclass_type.HOBBY)
+		]
+		user = User(name=test_values['name'])
+		user.skills[test_values['skill']['id']] = test_values['skill']
+		user.qualifications[test_values['qualification']['id']] = test_values['qualification']
+		user.people[test_values['person']['id']] = test_values['person']
+		user.projects[test_values['project']['id']] = test_values['project']
+		user.placements[test_values['placement']['id']] = test_values['placement']
+		user.hobbies[test_values['hobby']['id']] = test_values['hobby']
+		for target_data, skill_to_link, item_type in expected_results:
+			user.set_link_skill_to_item(target_data, skill_to_link, item_type)
+			item = user.get_item(target_data, item_type)
+			self.assertIn(skill_to_link, item['related_skills'], f"Failed to link skill {skill_to_link} to {item_type.value} with id {target_data}")
 
 
 
