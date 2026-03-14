@@ -381,16 +381,8 @@ people_data = parse_data("data/CV_Resources/AI_Example_data/people.yaml", datacl
 
 
 
-example_user.placements = {placement.id: placement for placement in placements_data}
-#merge(example_user.skills, {skill.id: skill for skill in skills_data})
-example_user.projects = {project.id: project for project in projects_data}
-example_user.hobbies = {hobby.id: hobby for hobby in hobbies_data}
-example_user.qualifications = {qualification.id: qualification for qualification in qualifications_data}
-example_user.people = {person.id: person for person in people_data}
-
 print("x")
 
-#SIGNOFF currently parse should go via validate, build any related_items that are not existant yet and place them onto user dicts, then build the parent item which related field should be a list of id's. 
 #TODO that list of ID's for related should probably be a dict for user search functions, maybe id:cai
 #endregion
 #TODO when a match is found update any null field with existing ones
