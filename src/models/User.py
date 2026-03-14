@@ -2,8 +2,24 @@
 from models.data_ingestion import dataclass_type
 from schema import *
 from exceptions.user_exceptions import *
+
+#region logging setup
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+full_handler = logging.FileHandler("data/logs/full.log")
+local = logging.FileHandler("data/logs/user.log")
+logformat = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+local.setFormatter(logformat)
+full_handler.setFormatter(logformat)
+logger.addHandler(full_handler)
+logger.addHandler(local)
+#endregion
+
 class User:
     def __init__(self, name: str, email = None, phone_number = None, linkedin = None, github = None, other_links = None):
+        if not isinstance(name, str) or not name:
+            logger.error("Invalid name provided for User initialization.")
+            raise ValueError("Name must be a non-empty string")
         contact_details = ContactDetails(name=name, email=email, phone_number=phone_number, linkedin=linkedin, github=github, other_links=other_links) #TODO 
         self.skills = {}
         self.qualifications = {}
@@ -26,7 +42,7 @@ class User:
         pre_length = len(d)
         d[data.id] = data
         #TODO add logger to generic class so all can use it
-        logger.trace(f"Added {data.name} to {d_type.value} dictionary. previous length of dict {pre_length}, current legnth {len(d)}")
+        logger.debug(f"Added {data.name} to {d_type.value} dictionary. previous length of dict {pre_length}, current legnth {len(d)}")
     def get_dict(self, d_type:dataclass_type):
         match d_type:
             case dataclass_type.SKILL:
@@ -67,6 +83,7 @@ class User:
         item = self.get_dict(d_type).get(item_id)
         if not item:
             #TODO logger this as warning
+            ItemNotFoundInUserDict(item_id, d_type)
             pass 
         return item
     

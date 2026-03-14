@@ -9,14 +9,19 @@ from datetime import datetime, date
 from schema import *
 from User import User
 from exceptions.user_exceptions import *
+
 #region logging setup
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-data_injest_file_log = logging.FileHandler("data/logs/data_ingestion.log")
+full_handler = logging.FileHandler("data/logs/full.log")
+local = logging.FileHandler("data/logs/data_ingestion.log")
 logformat = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
-data_injest_file_log.setFormatter(logformat)
-logger.addHandler(data_injest_file_log)
+local.setFormatter(logformat)
+full_handler.setFormatter(logformat)
+logger.addHandler(full_handler)
+logger.addHandler(local)
 #endregion
+
 #region generic tools
 class dataclass_type(Enum):
     SKILL = "Skill"
