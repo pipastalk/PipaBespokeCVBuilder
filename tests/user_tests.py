@@ -15,9 +15,9 @@ test_values = {
 		proficiency_level=None,
 		enjoyment_level=None,
 		tags=None,
-		related_placements=[],
-		related_projects=[],
-		related_qualifications=[]
+		related_placements={},
+		related_projects={},
+		related_qualifications={}
 	),
 	'qualification' : Qualification(
 		cai_hash="10987654321",
@@ -26,7 +26,7 @@ test_values = {
 		studied_at="University of Test",
 		awarded_date=datetime.date(2020, 6, 1),
 		grade="First Class",
-		related_skills=[],
+		related_skills={},
 		tags=[],
 		expiration_date=None,
 		comment=None
@@ -38,7 +38,7 @@ test_values = {
 		description="A project for testing",
 		start_date=None,
 		end_date=None,
-		related_skills=[],
+		related_skills={},
 		comment=None
 	),
 	'placement' : Placement(
@@ -49,8 +49,8 @@ test_values = {
 		start_date=datetime.date(2020, 1, 1),
 		end_date=datetime.date(2020, 12, 31),
 		project_references={},
-		reference_contacts=[],
-		related_skills=[],
+		reference_contacts={},
+		related_skills={},
 		reason_for_leaving=None
 	),
 	'hobby' : Hobby(
@@ -58,9 +58,9 @@ test_values = {
 		id="testing-HOBBY",
 		hobby_name="Testing",
 		description="Testing things for fun",
-		related_skills=[],
+		related_skills={},
 		tags=[],
-		awards_or_accolades=[],
+		awards_or_accolades={},
 		comment=None
 	)
 }

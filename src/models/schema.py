@@ -11,9 +11,9 @@ class Skill:
     proficiency_level: Optional[str]
     enjoyment_level: Optional[int] # how much do I enjoy this skill, could do with better name
     tags: set[str] = field(default_factory=set)
-    related_placements: Optional[dict[str, "Placement"]]
-    related_projects: Optional[dict[str, "Project"]]
-    related_qualifications: Optional[dict[str, "Qualification"]]
+    related_placements: set[str] = field(default_factory=set)
+    related_projects: set[str] = field(default_factory=set)
+    related_qualifications: set[str] = field(default_factory=set)
 @dataclass
 class Qualification:
     id: str
@@ -21,11 +21,11 @@ class Qualification:
     studied_at: str
     awarded_date: datetime
     cai_hash: str
-    related_skills: dict[str,"Skill"]
-    tags: set[str] = field(default_factory=set)
     grade: Optional[str]
     expiration_date: Optional[datetime] # for qualifications that expire, e.g. first aid, cpr, etc.
     comment: Optional[str]
+    related_skills: set[str] = field(default_factory=set)
+    tags: set[str] = field(default_factory=set)
 @dataclass
 class ContactDetails:
     name: str
@@ -51,8 +51,8 @@ class Project:
     cai_hash: str
     start_date: Optional[datetime]
     end_date: Optional[datetime]
-    related_skills: Optional[dict[str, "Skill"]]
     comment: Optional[str]
+    related_skills: set[str] = field(default_factory=set)
 @dataclass
 class Placement:
     id: str
@@ -94,7 +94,8 @@ class Hobby:
     hobby_name: str
     description: str
     cai_hash: str
-    related_skills: Optional[dict[str, "Skill"]]
-    tags: set[str] = field(default_factory=set)
-    awards_or_accolades: Optional[list[str]]
     comment: Optional[str]
+    tags: set[str] = field(default_factory=set)
+    awards_or_accolades: set[str] = field(default_factory=set)
+    related_skills: set[str] = field(default_factory=set)
+    

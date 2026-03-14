@@ -270,7 +270,7 @@ def build_placement(validated_placement, user: User):
         start_date=validated_placement['start_date'],
         end_date=validated_placement.get('end_date'),
         project_references=validated_placement['related_projects'] if 'related_projects' in validated_placement else {},
-        reference_contacts=validated_placement['reference_contacts'] if 'reference_contacts' in validated_placement else None,
+        reference_contacts=validated_placement['reference_contacts'] if 'reference_contacts' in validated_placement else {},
         related_skills=validated_placement['related_skills'] if 'related_skills' in validated_placement else {},
         reason_for_leaving=validated_placement['reason_for_leaving'] if 'reason_for_leaving' in validated_placement else None,
     )
@@ -285,8 +285,8 @@ def build_skill(validated_skill, user: User):
         skill_name=validated_skill['name'],
         proficiency_level=validated_skill['proficiency_level'] if 'proficiency_level' in validated_skill else None,
         enjoyment_level=validated_skill['enjoyment_level'] if 'enjoyment_level' in validated_skill else None,
-        tags=validated_skill['tags'] if 'tags' in validated_skill else None,
-        related_placements=validated_skill['related_placements'] if 'related_placements' in validated_skill else None,
+        tags=validated_skill['tags'] if 'tags' in validated_skill else [],
+        related_placements=validated_skill['related_placements'] if 'related_placements' in validated_skill else {},
         related_projects=validated_skill['related_projects'] if 'related_projects' in validated_skill else None,
         related_qualifications=validated_skill['related_qualifications'] if 'related_qualifications' in validated_skill else None,
     )
