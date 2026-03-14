@@ -395,3 +395,5 @@ print("x")
 #TODO sort the related_projects, related_placements, related_hobbies etc
 
 #TODO fix issue with results of parse_data, works for everything but skills atm but with circular it needs to write to the user not return the data
+
+#TODO [REQUIRED] [MINOR] update the build functions to ensure tags, related_skills etc are lists / right type

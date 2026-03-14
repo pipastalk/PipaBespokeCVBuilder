@@ -43,6 +43,7 @@ class User:
         d[data.id] = data
         #TODO add logger to generic class so all can use it
         logger.debug(f"Added {data.name} to {d_type.value} dictionary. previous length of dict {pre_length}, current legnth {len(d)}")
+    
     def get_dict(self, d_type:dataclass_type):
         match d_type:
             case dataclass_type.SKILL:
@@ -117,6 +118,5 @@ class User:
                 if v.get('cai_hash') == cai_hash:
                     return v, d_type
         return None
-
 
 #TODO add in data tooling way to store unassigned items that can then be later processed
