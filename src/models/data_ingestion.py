@@ -248,7 +248,7 @@ def build_placement(validated_placement, user: User):
     placement = Placement(
         cai_hash=validated_placement['cai_hash'],
         id = generate_id(validated_placement, dataclass_type.PLACEMENT, user),
-        company_name=validated_placement['name'],
+        name=validated_placement['name'],
         job_title=validated_placement['job_title'],
         start_date=validated_placement['start_date'],
         end_date=validated_placement.get('end_date'),
@@ -265,7 +265,7 @@ def build_skill(validated_skill, user: User):
     skill = Skill(
         cai_hash=validated_skill['cai_hash'],
         id = generate_id(validated_skill, dataclass_type.SKILL, user),
-        skill_name=validated_skill['name'],
+        name=validated_skill['name'],
         proficiency_level=validated_skill['proficiency_level'] if 'proficiency_level' in validated_skill else None,
         enjoyment_level=validated_skill['enjoyment_level'] if 'enjoyment_level' in validated_skill else None,
         tags=validated_skill['tags'] if 'tags' in validated_skill else set(),
@@ -281,7 +281,7 @@ def build_project(validated_project, user: User):
     project = Project(
         cai_hash=validated_project['cai_hash'],
         id = generate_id(validated_project, dataclass_type.PROJECT, user),
-        project_name=validated_project['name'],
+        name=validated_project['name'],
         description=validated_project['description'],
         start_date=validated_project['start_date'] if 'start_date' in validated_project else None,
         end_date=validated_project['end_date'] if 'end_date' in validated_project else None,
@@ -296,7 +296,7 @@ def build_hobby(validated_hobby, user: User):
     hobby = Hobby(
         cai_hash = validated_hobby['cai_hash'],
         id = generate_id(validated_hobby, dataclass_type.HOBBY, user),
-        hobby_name=validated_hobby['name'],
+        name=validated_hobby['name'],
         description=validated_hobby['description'],
         related_skills=validated_hobby['related_skills'] if 'related_skills' in validated_hobby else set(),
         tags=validated_hobby['tags'] if 'tags' in validated_hobby else set(),
@@ -311,7 +311,7 @@ def build_qualification(validated_qualification, user: User):
     qualification = Qualification(
         cai_hash=validated_qualification['cai_hash'],
         id = generate_id(validated_qualification, dataclass_type.QUALIFICATION, user),
-        qualification_name=validated_qualification['name'],
+        name=validated_qualification['name'],
         studied_at=validated_qualification['studied_at'],
         awarded_date=validated_qualification['awarded_date'],
         grade = validated_qualification['grade'],

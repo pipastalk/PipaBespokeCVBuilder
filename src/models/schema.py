@@ -5,7 +5,7 @@ from typing import Optional
 
 @dataclass
 class Skill:
-    skill_name: str
+    name: str
     id: str
     cai_hash: str
     proficiency_level: Optional[str]
@@ -17,7 +17,7 @@ class Skill:
 @dataclass
 class Qualification:
     id: str
-    qualification_name: str
+    name: str
     studied_at: str
     awarded_date: date
     cai_hash: str
@@ -46,7 +46,7 @@ class Person:
 @dataclass
 class Project:
     id: str
-    project_name: str
+    name: str
     description: str
     cai_hash: str
     start_date: Optional[date]
@@ -56,7 +56,7 @@ class Project:
 @dataclass
 class Placement:
     id: str
-    company_name: str
+    name: str
     job_title: str
     start_date: date
     cai_hash: str
@@ -91,7 +91,7 @@ class Advert:
 @dataclass
 class Hobby:
     id: str
-    hobby_name: str
+    name: str
     description: str
     cai_hash: str
     comment: Optional[str]
