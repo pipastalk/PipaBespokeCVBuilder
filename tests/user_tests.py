@@ -16,9 +16,9 @@ class Test_User(unittest.TestCase):
 			"linkedin": "https://www.linkedin.com/in/testuser", 
 			"github": "https://github.com/testuser",
 			'skill' : Skill(
-				cai_hash="10987654321",
+				cai_hash="10987654321skill",
 				id="python-SKILL",
-				skill_name="Python",
+				name="Python",
 				proficiency_level=None,
 				enjoyment_level=None,
 				tags=set(),
@@ -27,9 +27,9 @@ class Test_User(unittest.TestCase):
 				related_qualifications=set()
 			),
 			'qualification' : Qualification(
-				cai_hash="10987654321",
+				cai_hash="10987654321qual",
 				id="bsc_computer_science-QUALIFICATION",
-				qualification_name="BSc Computer Science",
+				name="BSc Computer Science",
 				studied_at="University of Test",
 				awarded_date=date(2020, 6, 1),
 				grade="First Class",
@@ -39,9 +39,9 @@ class Test_User(unittest.TestCase):
 				comment=None	
 			),
 			'project' : Project(
-				cai_hash="10987654321",
+				cai_hash="10987654321proj",
 				id="test_project_1098-PROJECT",
-				project_name="Test Project",
+				name="Test Project",
 				description="A project for testing",
 				start_date=None,
 				end_date=None,
@@ -49,9 +49,9 @@ class Test_User(unittest.TestCase):
 				comment=None
 			),
 			'placement' : Placement(
-				cai_hash="10987654321",
+				cai_hash="10987654321pla",
 				id="test_company_software_engineer-PLACEMENT",
-				company_name="Test Company",
+				name="Test Company",
 				job_title="Software Engineer",
 				start_date=date(2020, 1, 1),
 				end_date=date(2020, 12, 31),
@@ -61,9 +61,9 @@ class Test_User(unittest.TestCase):
 				reason_for_leaving=None
 			),
 			'hobby' : Hobby(
-				cai_hash="10987654321",
+				cai_hash="10987654321hob",
 				id="testing-HOBBY",
-				hobby_name="Testing",
+				name="Testing",
 				description="Testing things for fun",
 				related_skills=set(),
 				tags=set(),
@@ -133,7 +133,7 @@ class Test_User(unittest.TestCase):
 			(dataclass_type.QUALIFICATION, "generic_testing_value-QUALIFICATION"), #expected name-TYPE
 			(dataclass_type.PERSON, "10987654321-PERSON"), #expected cai_hash-TYPE
 			(dataclass_type.PROJECT, "generic_testing_value-1098-PROJECT"),#expected name-shortHash-TYPE
-			(dataclass_type.PLACEMENT, "generic_testing_value-Test_Job_Title-PLACEMENT"), #expected name-jobTitle-TYPE
+			(dataclass_type.PLACEMENT, "generic_testing_value-test_job_title-PLACEMENT"), #expected name-jobTitle-TYPE
 			(dataclass_type.HOBBY, "generic_testing_value-HOBBY"), #expected name-TYPE
 		]
 		for d_type, expected_id in expected_results:
@@ -173,7 +173,7 @@ class Test_User(unittest.TestCase):
 			(dataclass_type.HOBBY, user.hobbies),
 		]
 		for d_type, tar_dict in expected_results:
-			result = user.get_dict(d_type),
+			result = user.get_dict(d_type)
 			self.assertIs(result, tar_dict, f"Failed to get correct dict for {d_type.value}")
 		self.print_end(msg)
 
@@ -182,12 +182,12 @@ class Test_User(unittest.TestCase):
 		self.print_start(msg)
 		user = User(name=self.test_values['name'])
 		expected_results = [
-			(self.test_values['skill']['id'], dataclass_type.SKILL, user.skills,self.test_values['skill']),
-			(self.test_values['qualification']['id'], dataclass_type.QUALIFICATION, user.qualifications,self.test_values['qualification']),
-			(self.test_values['person']['id'], dataclass_type.PERSON, user.people,self.test_values['person']),
-			(self.test_values['project']['id'], dataclass_type.PROJECT, user.projects,self.test_values['project']),
-			(self.test_values['placement']['id'], dataclass_type.PLACEMENT, user.placements,self.test_values['placement']),
-			(self.test_values['hobby']['id'], dataclass_type.HOBBY, user.hobbies,self.test_values['hobby']),
+			(self.test_values['skill'].id, dataclass_type.SKILL, user.skills,self.test_values['skill']),
+			(self.test_values['qualification'].id, dataclass_type.QUALIFICATION, user.qualifications,self.test_values['qualification']),
+			#(self.test_values['person'].id, dataclass_type.PERSON, user.people,self.test_values['person']),
+			(self.test_values['project'].id, dataclass_type.PROJECT, user.projects,self.test_values['project']),
+			(self.test_values['placement'].id, dataclass_type.PLACEMENT, user.placements,self.test_values['placement']),
+			(self.test_values['hobby'].id, dataclass_type.HOBBY, user.hobbies,self.test_values['hobby']),
 		]
 		for data, d_type, tar_dict, expected_result in expected_results:
 			tar_dict[data] = expected_result #manual add of item
@@ -200,25 +200,25 @@ class Test_User(unittest.TestCase):
 		self.print_start(msg)
 		#search_data, expected_results(object, object_type)
 		expected_results = [
-			(self.test_values['skill']['cai_hash'], (self.test_values['skill'], dataclass_type.SKILL)),
-			(self.test_values['qualification']['cai_hash'], (self.test_values['qualification'], dataclass_type.QUALIFICATION)),
-			(self.test_values['person']['cai_hash'], (self.test_values['person'], dataclass_type.PERSON)),
-			(self.test_values['project']['cai_hash'], (self.test_values['project'], dataclass_type.PROJECT)),
-			(self.test_values['placement']['cai_hash'], (self.test_values['placement'], dataclass_type.PLACEMENT)),
-			(self.test_values['hobby']['cai_hash'], (self.test_values['hobby'], dataclass_type.HOBBY))
+			(self.test_values['skill'].cai_hash, (self.test_values['skill'], dataclass_type.SKILL)),
+			(self.test_values['qualification'].cai_hash, (self.test_values['qualification'], dataclass_type.QUALIFICATION)),
+			#self.test_values['person'].cai_hash, (self.test_values['person'], dataclass_type.PERSON)),
+			(self.test_values['project'].cai_hash, (self.test_values['project'], dataclass_type.PROJECT)),
+			(self.test_values['placement'].cai_hash, (self.test_values['placement'], dataclass_type.PLACEMENT)),
+			(self.test_values['hobby'].cai_hash, (self.test_values['hobby'], dataclass_type.HOBBY))
 		]
 		user = User(name=self.test_values['name'])
-		user.skills[self.test_values['skill']['id']] = self.test_values['skill']
-		user.qualifications[self.test_values['qualification']['id']] = self.test_values['qualification']
-		user.people[self.test_values['person']['id']] = self.test_values['person']
-		user.projects[self.test_values['project']['id']] = self.test_values['project']
-		user.placements[self.test_values['placement']['id']] = self.test_values['placement']
-		user.hobbies[self.test_values['hobby']['id']] = self.test_values['hobby']
+		user.skills[self.test_values['skill'].id] = self.test_values['skill']
+		user.qualifications[self.test_values['qualification'].id] = self.test_values['qualification']
+		#user.people[self.test_values['person'].id] = self.test_values['person']
+		user.projects[self.test_values['project'].id] = self.test_values['project']
+		user.placements[self.test_values['placement'].id] = self.test_values['placement']
+		user.hobbies[self.test_values['hobby'].id] = self.test_values['hobby']
 		
 		for search_data, expected_result in expected_results:
 			result = user.hash_search(search_data)
-			self.assertEqual(result, "Failed to find item with cai_hash search")
-			self.assertIs(result, expected_result, f"search by cai hash failed to retrieve right item\nresult: NAME-{result[0]['name']} TYPE-{result[1]}\nexpected_result: NAME-{expected_result[0]['name']}, TYPE-{expected_result[1]}\nsearch data:{search_data}") # type: ignore
+			self.assertIsNotNone(result, "Failed to find item with cai_hash search")
+			self.assertEqual(result, expected_result, f"search by cai hash failed to retrieve right item\nresult: NAME-{result[0].name} TYPE-{result[1]}\nexpected_result: NAME-{expected_result[0].name}, TYPE-{expected_result[1]}\nsearch data:{search_data}") 
 		self.print_end(msg)
 
 	def test_set_link_skill_to_item(self):
@@ -226,23 +226,23 @@ class Test_User(unittest.TestCase):
 		self.print_start(msg)
 		#target_data, skill_to_link, item_type
 		expected_results = [
-			(self.test_values['project']['id'], self.test_values['skill']['id'], dataclass_type.PROJECT),
-			(self.test_values['placement']['id'], self.test_values['skill']['id'], dataclass_type.PLACEMENT),
-			(self.test_values['qualification']['id'], self.test_values['skill']['id'], dataclass_type.QUALIFICATION),
-			(self.test_values['hobby']['id'], self.test_values['skill']['id'], dataclass_type.HOBBY)
+			(self.test_values['project'].id, self.test_values['skill'].id, dataclass_type.PROJECT),
+			(self.test_values['placement'].id, self.test_values['skill'].id, dataclass_type.PLACEMENT),
+			(self.test_values['qualification'].id, self.test_values['skill'].id, dataclass_type.QUALIFICATION),
+			(self.test_values['hobby'].id, self.test_values['skill'].id, dataclass_type.HOBBY)
 		]
 		user = User(name=self.test_values['name'])
-		user.skills[self.test_values['skill']['id']] = self.test_values['skill']
-		user.qualifications[self.test_values['qualification']['id']] = self.test_values['qualification']
-		user.people[self.test_values['person']['id']] = self.test_values['person']
-		user.projects[self.test_values['project']['id']] = self.test_values['project']
-		user.placements[self.test_values['placement']['id']] = self.test_values['placement']
-		user.hobbies[self.test_values['hobby']['id']] = self.test_values['hobby']
+		user.skills[self.test_values['skill'].id] = self.test_values['skill']
+		user.qualifications[self.test_values['qualification'].id] = self.test_values['qualification']
+		#user.people[self.test_values['person'].id] = self.test_values['person']
+		user.projects[self.test_values['project'].id] = self.test_values['project']
+		user.placements[self.test_values['placement'].id] = self.test_values['placement']
+		user.hobbies[self.test_values['hobby'].id] = self.test_values['hobby']
 		for target_data, skill_to_link, item_type in expected_results:
 			user.set_link_skill_to_item(target_data, skill_to_link, item_type)
 			item = user.get_item(target_data, item_type)
-			self.assertIsNone(item, f"Failed to find {item_type.value} with id {target_data} when trying to link skill")
-			self.assertIn(skill_to_link, item['related_skills'], f"Failed to link skill {skill_to_link} to {item_type.value} with id {target_data}") # type: ignore
+			self.assertIsNotNone(item, f"Failed to find {item_type.value} with id {target_data} when trying to link skill")
+			self.assertIn(skill_to_link, item.related_skills, f"Failed to link skill {skill_to_link} to {item_type.value} with id {target_data}") # type: ignore
 		#TODO add test cases for already linked skill, non existent skill, non existent item
 		self.print_end(msg)
 

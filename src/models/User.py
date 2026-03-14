@@ -58,8 +58,8 @@ class User:
         registry_map = {
             dataclass_type.SKILL: data['name'],
             dataclass_type.QUALIFICATION: data['name'],
-            dataclass_type.PROJECT: f"{data['name']} {data['cai_hash'][:4]}",  #adds short hash to help differentiate projects with same name
-            dataclass_type.PLACEMENT: f"{data['name']} {data['job_title']}", #adds job title to help differentiate placements with same company name
+            dataclass_type.PROJECT: f"{data['name']}-{data['cai_hash'][:4]}",  #adds short hash to help differentiate projects with same name
+            dataclass_type.PLACEMENT: f"{data['name']}-{data['job_title']}", #adds job title to help differentiate placements with same company name
             dataclass_type.HOBBY: data['name'],
             dataclass_type.PERSON: data['cai_hash']
         }
@@ -81,7 +81,7 @@ class User:
     
     def set_link_skill_to_item(self,item_id: str, skill_id: str, d_type:dataclass_type): #checks if skill exists and if link exists with dataclass. with no matches adds skill_id to dict  
         item = self._validate_link_data(item_id, skill_id, d_type)
-        item['related_skills'][skill_id] = skill_id  
+        item.related_skills.add(skill_id)  
     
     def _validate_link_data(self, item_id: str, skill_id: str, d_type:dataclass_type): #helper for set_link_skill_to_item
         item = self.get_item(item_id, d_type)
@@ -90,7 +90,7 @@ class User:
         skill = self.get_item(skill_id, dataclass_type.SKILL)
         if not skill:
             raise SkillNotFoundInUserDict(skill_id,d_type)
-        existing_skill_check = item.get_item(skill_id, d_type)
+        existing_skill_check = self.get_item(skill_id, d_type)
         if existing_skill_check:
             raise SkillLinkAlreadyExists(skill_id, item_id)
         return item
@@ -106,7 +106,7 @@ class User:
         ]
         for d_type, d in reigtry_map:
             for k, v in d.items():
-                if v.get('cai_hash') == cai_hash:
+                if v.cai_hash == cai_hash:
                     return v, d_type
         raise ValueError(cai_hash, "unknown dataclass type, searched all dicts")
         return None
