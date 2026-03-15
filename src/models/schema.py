@@ -8,8 +8,8 @@ class Skill:
     name: str
     id: str
     cai_hash: str
-    proficiency_level: Optional[str]
-    enjoyment_level: Optional[int] # how much do I enjoy this skill, could do with better name
+    proficiency_level: Optional[str] = None
+    enjoyment_level: Optional[int] = None # how much do I enjoy this skill, could do with better name
     tags: set[str] = field(default_factory=set)
     related_placements: set[str] = field(default_factory=set)
     related_projects: set[str] = field(default_factory=set)
@@ -21,19 +21,19 @@ class Qualification:
     studied_at: str
     awarded_date: date
     cai_hash: str
-    grade: Optional[str]
-    expiration_date: Optional[date] # for qualifications that expire, e.g. first aid, cpr, etc.
-    comment: Optional[str]
+    grade: Optional[str] = None
+    expiration_date: Optional[date] = None # for qualifications that expire, e.g. first aid, cpr, etc.
+    comment: Optional[str] = None
     related_skills: set[str] = field(default_factory=set)
     tags: set[str] = field(default_factory=set)
 @dataclass
 class ContactDetails:
     name: str
-    email: Optional[str]
-    phone_number: Optional[str]
-    linkedin: Optional[str]
-    github: Optional[str]
-    other_links: Optional[list[str]]
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    linkedin: Optional[str] = None
+    github: Optional[str] = None
+    other_links: Optional[list[str]] = None
 @dataclass
 class Person:
     cai_hash: str
@@ -41,17 +41,17 @@ class Person:
     name: str
     relation_type: str
     is_reference: bool
-    contact_details: Optional[ContactDetails]
-    comment: Optional[str]
+    contact_details: Optional[ContactDetails] = None
+    comment: Optional[str] = None
 @dataclass
 class Project:
     id: str
     name: str
     description: str
     cai_hash: str
-    start_date: Optional[date]
-    end_date: Optional[date]
-    comment: Optional[str]
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    comment: Optional[str] = None
     related_skills: set[str] = field(default_factory=set)
 @dataclass
 class Placement:
@@ -61,7 +61,7 @@ class Placement:
     start_date: date
     cai_hash: str
     end_date: date
-    reason_for_leaving: Optional[str]
+    reason_for_leaving: Optional[str] = None
     project_references: set[str] = field(default_factory=set)
     reference_contacts: set[str] = field(default_factory=set)
     related_skills: set[str] = field(default_factory=set)
@@ -69,14 +69,14 @@ class Placement:
 class Location:
     city: str #Will accept Remote/Home as a city
     country: str #maybe use ISO country codes and a enum for this?
-    address: Optional[str] #is there a library for this?
-    post_or_zip_code: Optional[str] #check libraries for validating this?
-    gps_coordinates: Optional[str] #TODO bonus extra for google maps link
+    address: Optional[str] = None #is there a library for this?
+    post_or_zip_code: Optional[str] = None #check libraries for validating this?
+    gps_coordinates: Optional[str] = None #TODO bonus extra for google maps link
 @dataclass
 class AdvertSource:
     source_path: str #url or file path
     sourced_from: str #where this advert was found, e.g. linkedin, company website, etc.
-    comment: Optional[str] #personal notes about the advert
+    comment: Optional[str] = None #personal notes about the advert
 @dataclass
 class Advert:
     advert_title: str
@@ -94,7 +94,7 @@ class Hobby:
     name: str
     description: str
     cai_hash: str
-    comment: Optional[str]
+    comment: Optional[str] = None
     tags: set[str] = field(default_factory=set)
     awards_or_accolades: set[str] = field(default_factory=set)
     related_skills: set[str] = field(default_factory=set)

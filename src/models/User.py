@@ -35,21 +35,18 @@ class User:
         logger.info(f"Added {data.name} to {d_type.value} dictionary. previous length of dict {pre_length}, current legnth {len(d)}")
     
     def get_dict(self, d_type:dataclass_type):
-        match d_type:
-            case dataclass_type.SKILL:
-                return self.skills
-            case dataclass_type.QUALIFICATION:
-                return self.qualifications
-            case dataclass_type.PERSON:
-                return self.people
-            case dataclass_type.PROJECT:
-                return self.projects
-            case dataclass_type.PLACEMENT:
-                return self.placements
-            case dataclass_type.HOBBY:
-                return self.hobbies
-            case _:
-                raise ValueError(f"Unsupported dataclass type: {d_type}")
+        registry_map = {
+            dataclass_type.SKILL: self.skills,
+            dataclass_type.QUALIFICATION: self.qualifications,
+            dataclass_type.PERSON: self.people,
+            dataclass_type.PROJECT: self.projects,
+            dataclass_type.PLACEMENT: self.placements,
+            dataclass_type.HOBBY: self.hobbies,
+        }
+        d = registry_map.get(d_type)
+        if d is None:
+            raise ValueError(f"Unsupported dataclass type: {d_type}")
+        return d
         
     def generate_id(self, data, d_type:dataclass_type, hash_suffix_length=0):
         if hash_suffix_length > len(data['cai_hash']):
