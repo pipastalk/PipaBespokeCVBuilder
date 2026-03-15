@@ -36,3 +36,8 @@ def prep_loggers():
     logic_logger.addHandler(logic_handler)
     logic_logger.addHandler(console_handler)
     logic_logger.setLevel(logging.DEBUG)
+
+
+def log_and_raise(logger, level, message, exception):
+    logger.log(level, message)
+    raise exception(message)

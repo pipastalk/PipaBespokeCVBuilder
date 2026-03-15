@@ -9,6 +9,7 @@ from src.models.dataclass_type import dataclass_type
 from src.models.schema import *
 from src.models.User import User
 from src.exceptions.user_exceptions import *
+from src.logging import log_and_raise
 
 
 #region logging setup
@@ -31,14 +32,13 @@ def validate_data(data,d_type:dataclass_type, user: User):
     required_fields = get_required_fields(d_type)
     date_fields = ['start_date', 'end_date', 'awarded_date', 'expiration_date']
     if not data:
-        raise ValueError("Placement was invalid, expected company as base field")
+        log_and_raise(logger, logging.ERROR, "Placement was invalid, expected company as base field", ValueError)
     if not data.get('cai_hash'):
         logger.warning(f"cai_hash not provided for {d_type.value} with name {data['name']}, generating cai_hash")
         data['cai_hash'] = build_cai_hash(data)  
     for field in required_fields:
         if not data[field]:
-            logger.error(f"Required field is missing from data, field:{required_fields}")
-            raise ValueError(f"Required field is missing from data, field:{required_fields}")
+            log_and_raise(logger, logging.ERROR, f"Required field {field} is missing from data for {d_type.value} with name {data['name']}", ValueError)
     for field in data:
         if field in date_fields:
             validated_data[field] = convert_date(data[field])
@@ -85,7 +85,7 @@ def create_missing_related_items(data: list, d_type: dataclass_type, user: User)
             item_object = build(validate_data(item, d_type, user), user)
         item_id = item_object[0].id
         if not user.get_item(item_id, d_type): # check for item exists but not within the dict for this dataclass. e.g. Project cai_hash in user.placements set
-            raise ValueError("Wrong dataclass_type for the item") #TODO better exception
+            log_and_raise(logger, logging.ERROR, "Wrong dataclass_type for the item", ValueError) #TODO better exception
         items_data.append(item_id)
     return items_data
         
@@ -110,7 +110,7 @@ def get_required_fields(d_type:dataclass_type):
         case dataclass_type.HOBBY:
             required_fields = ['name', 'description','cai_hash']
         case _:
-            raise ValueError("Invalid dataclass type provided for validation")
+            log_and_raise(logger, logging.ERROR, "Invalid dataclass type provided for validation", ValueError)
     return required_fields
 
 def get_link_skills(skill_data_list, dataclass_type, user: User):
@@ -150,37 +150,31 @@ def convert_date(date_field):
     return date_field
 
 def parse_data(file_path, d_type: dataclass_type, user: User):
-
-    match d_type:
-        case dataclass_type.PERSON:
-            build = build_person
-        case dataclass_type.PLACEMENT:
-            build = build_placement
-        case dataclass_type.PROJECT:
-            build = build_project
-        #TODO case dataclass_type.LOCATION:          pass
-        #TODO case dataclass_type.ADVERTSOURCE:       pass
-        #TODO case dataclass_type.ADVERT:             pass
-        case dataclass_type.SKILL:
-            build = build_skill
-        case dataclass_type.QUALIFICATION:
-            build = build_qualification
-        case dataclass_type.HOBBY:
-            build = build_hobby
-        case _:
-            raise ValueError("Invalid dataclass type provided for parsing")
-    
+    registry_map = {
+        dataclass_type.PERSON: build_person,
+        dataclass_type.PLACEMENT: build_placement,
+        dataclass_type.PROJECT: build_project,
+        #TODO dataclass_type.LOCATION: build_location,
+        #TODO dataclass_type.ADVERTSOURCE: build_advert_source,
+        #TODO dataclass_type.ADVERT: build_advert,
+        dataclass_type.SKILL: build_skill,
+        dataclass_type.QUALIFICATION: build_qualification,
+        dataclass_type.HOBBY: build_hobby,
+    }
+    build = registry_map.get(d_type)
+    if not build:
+        log_and_raise(logger, logging.ERROR, "Invalid dataclass type provided for parsing", ValueError)
     file_data = read_yaml_file(file_path)
     for entry in file_data:
         logger.info(f"Parsing {d_type.value} entry: {entry}")
         if not entry:
-            raise ValueError(f"Empty entry found in {d_type.value} file, please ensure all entries have data. .yaml files should not end in ---") ##TODO could doa silent error
+            log_and_raise(logger, logging.ERROR, f"Empty entry found in {d_type.value} file, please ensure all entries have data. .yaml files should not end in ---", ValueError) ##TODO could do a silent error
         validated_data = validate_data(entry, d_type, user)
         if build:
             finished_entry = build(validated_data, user)
             user.add_data(finished_entry, d_type)
         else:
-            raise NotImplementedError(f"No build function implemented for {d_type.value}")
+            log_and_raise(logger, logging.ERROR, f"No build function implemented for {d_type.value}", NotImplementedError)
 
 def check_for_duplicates(cai_hash, dataclass_type: dataclass_type, user: User): 
     #returns false if no duplicate, returns existing object if duplicate found. Searches via cai_hash not via id
@@ -219,18 +213,11 @@ def generate_id(data, dataclass_type: dataclass_type, user: User):
             id = str(unconverted_id).lower().replace(" ", "_") + "-" + dataclass_type.value.upper() + "-" + data['cai_hash'][2:(attempts+2)] #adds short hash to ensure unique id, in case of duplicate names. Only added if duplicate found to keep ids clean where possible
             attempts += 1
             if attempts > 12:
-                logger.error(f"Duplicate id {id} found for {dataclass_type.value} with name {data['name']}")
-                raise ValueError(f"Unable to generate new ID for {dataclass_type.value} with name {data['name']} after 12 attempts.") #TODO handle this better
+                log_and_raise(logger, logging.ERROR, f"Unable to generate new ID for {dataclass_type.value} with name {data['name']} after {attempts} attempts.", ValueError) #TODO handle this better
         return id
-    logger.info(f"Duplicate found for {dataclass_type.value} with name {data['name']}, using existing id {dupe.__dict__.get(dataclass_type.value.lower() + '_id')}")
-    raise ValueError(f"Duplicate entry found for {dataclass_type.value} with name {data['name']}, please use existing entry {dupe.id}")      
+    log_and_raise(logger, logging.INFO, f"Duplicate found for {dataclass_type.value} with name {data['name']}, using existing id {dupe.__dict__.get(dataclass_type.value.lower() + '_id')}", ValueError)      
 
 def build_cai_hash(data):
-    #Content-Addressable Identifier
-    #build dict of all the data
-    #conect dict to string
-    #hash string to create unique identifier for this data
-    #return hash
     # Convert data to a canonical string (sorted keys for consistency)
     data_str = json.dumps(data, sort_keys=True, separators=(',', ':'), default=str) # default=str to handle non-serializable objects like dates
     # Hash the string using SHA-256
@@ -239,11 +226,11 @@ def build_cai_hash(data):
     return hash_obj.hexdigest()
 
 def merge_matched_data(data, cai_hash, dataclass_type: dataclass_type, user: User):
-    #DOING 
+    #TODO 
     pass
 #endregion
 
-#region placements tools
+#region builds for dataclass objects
 def build_placement(validated_placement, user: User):
     placement = Placement(
         cai_hash=validated_placement['cai_hash'],
@@ -258,9 +245,7 @@ def build_placement(validated_placement, user: User):
         reason_for_leaving=validated_placement['reason_for_leaving'] if 'reason_for_leaving' in validated_placement else None,
     )
     return placement
-#endregion
 
-#region skills tools
 def build_skill(validated_skill, user: User):
     skill = Skill(
         cai_hash=validated_skill['cai_hash'],
@@ -274,9 +259,7 @@ def build_skill(validated_skill, user: User):
         related_qualifications=validated_skill['related_qualifications'] if 'related_qualifications' in validated_skill else set(),
     )
     return skill
-#endregion
 
-#region project tools
 def build_project(validated_project, user: User):
     project = Project(
         cai_hash=validated_project['cai_hash'],
@@ -289,9 +272,7 @@ def build_project(validated_project, user: User):
         comment=validated_project['comment'] if 'comment' in validated_project else None,
     )
     return project
-#endregion
 
-#region hobby tools
 def build_hobby(validated_hobby, user: User):
     hobby = Hobby(
         cai_hash = validated_hobby['cai_hash'],
@@ -304,9 +285,7 @@ def build_hobby(validated_hobby, user: User):
         comment=validated_hobby['comment'] if 'comment' in validated_hobby else None,
     )
     return hobby
-#endregion
 
-#region qualification tools
 def build_qualification(validated_qualification, user: User):
     qualification = Qualification(
         cai_hash=validated_qualification['cai_hash'],
@@ -321,9 +300,7 @@ def build_qualification(validated_qualification, user: User):
         comment=validated_qualification['comment'] if 'comment' in validated_qualification else None,
     )
     return qualification
-#endregion
-    
-#region people tools
+
 def build_person(validated_person, user: User): #Validates and builds contact details within Person.
     validated_contact_data = validate_data(validated_person['contact_details'], dataclass_type.CONTACT_DETAILS, user)
     person = Person(
@@ -336,9 +313,7 @@ def build_person(validated_person, user: User): #Validates and builds contact de
         comment=validated_person['comment'] if 'comment' in validated_person else None,
     )
     return person
-#endregion
 
-#region contactdetails tools
 #contact details doesn't parse as they are provided within other dataclasses
 def build_contact_details(validated_contact_details):
     contact_details = ContactDetails(
@@ -352,8 +327,10 @@ def build_contact_details(validated_contact_details):
     return contact_details
 #endregion
 
-"""
+
 #region scratch testing
+
+"""
 example_user = User(
     name="Pippa",
     email="test@test.com",
@@ -368,12 +345,13 @@ qualifications_data = parse_data("data/CV_Resources/AI_Example_data/qualificatio
 people_data = parse_data("data/CV_Resources/AI_Example_data/people.yaml", dataclass_type.PERSON, example_user)
 """
 
-#TODO that list of ID's for related should probably be a dict for user search functions, maybe id:cai
+
 #endregion
+
+#TODO that list of ID's for related should probably be a dict for user search functions, maybe id:cai
 #TODO when a match is found update any null field with existing ones
+
 #TODO handle generate_id duplicate id's better, currently a short hash could hit limits, not sure if we may hit an additional unhandled error that no more values in cai_hash
-#TODO sort the related_projects, related_placements, related_hobbies etc
+
 
 #TODO fix issue with results of parse_data, works for everything but skills atm but with circular it needs to write to the user not return the data
-
-#TODO [REQUIRED] [MINOR] update the build functions to ensure tags, related_skills etc are lists / right type
