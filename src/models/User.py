@@ -66,8 +66,7 @@ class User:
         id = str(unconverted_id).lower().replace(" ", "_") + data['cai_hash'][0:hash_suffix_length] + "-" + d_type.value.upper()
         duplicate = self.get_item(id, d_type)
         if duplicate:
-            print(f"Warning: Duplicate ID generated for {d_type.value} with name '{data['name']}'.")
-            raise ValueError(f"Duplicate entry found in {d_type.value}", duplicate.id)
+            raise DuplicateItemIDExists(f"Duplicate entry found in {d_type.value}", duplicate.id)
         return id
     
     def get_item(self, item_id: str, d_type:dataclass_type): #should return item or None if not found
@@ -106,7 +105,6 @@ class User:
             for k, v in d.items():
                 if v.cai_hash == cai_hash:
                     return v, d_type
-        raise ValueError(cai_hash, "unknown dataclass type, searched all dicts")
         return None
 
 #TODO add in data tooling way to store unassigned items that can then be later processed, not sure I need this anymore
