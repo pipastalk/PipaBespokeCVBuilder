@@ -149,23 +149,6 @@ def parse_data(file_path, d_type: dataclass_type, user: User):
         finished_entry = build(validated_data, user)
         user.add_data(finished_entry, d_type) #Keeping add outside of build to allow for single purpose function and easier unit testing
 
-def check_for_duplicates(cai_hash, dataclass_type: dataclass_type, user: User): 
-    #returns false if no duplicate, returns existing object if duplicate found. Searches via cai_hash not via id
-    existing_matches = {}
-    registry_map = {
-        dataclass_type.SKILL: user.skills,
-        dataclass_type.QUALIFICATION: user.qualifications,
-        dataclass_type.PROJECT: user.projects,
-        dataclass_type.PLACEMENT: user.placements,
-        dataclass_type.HOBBY: user.hobbies,
-        dataclass_type.PERSON: user.people
-    }
-    for k, v in registry_map.get(dataclass_type, {}).items():
-        existing_matches[v.cai_hash] = v
-    if cai_hash in existing_matches:
-        return existing_matches[cai_hash]
-    return False
-
 def build_cai_hash(data):
     # Convert data to a canonical string (sorted keys for consistency)
     data_str = json.dumps(data, sort_keys=True, separators=(',', ':'), default=str) # default=str to handle non-serializable objects like dates
@@ -278,7 +261,6 @@ def build_contact_details(validated_contact_details):
 
 
 #region scratch testing
-
 """
 example_user = User(
     name="Pippa",
@@ -293,14 +275,6 @@ hobbies_data = parse_data("data/CV_Resources/AI_Example_data/hobbies.yaml", data
 qualifications_data = parse_data("data/CV_Resources/AI_Example_data/qualifications.yaml", dataclass_type.QUALIFICATION, example_user)
 people_data = parse_data("data/CV_Resources/AI_Example_data/people.yaml", dataclass_type.PERSON, example_user)
 """
-
-
 #endregion
 
-#TODO that list of ID's for related should probably be a dict for user search functions, maybe id:cai
 #TODO when a match is found update any null field with existing ones
-
-#TODO handle generate_id duplicate id's better, currently a short hash could hit limits, not sure if we may hit an additional unhandled error that no more values in cai_hash
-
-
-#TODO fix issue with results of parse_data, works for everything but skills atm but with circular it needs to write to the user not return the data
