@@ -32,7 +32,6 @@ class User:
         d = registry_map[d_type]
         pre_length = len(d)
         d[data.id] = data
-        #TODO add logger to generic class so all can use it
         logger.info(f"Added {data.name} to {d_type.value} dictionary. previous length of dict {pre_length}, current legnth {len(d)}")
     
     def get_dict(self, d_type:dataclass_type):
@@ -74,7 +73,6 @@ class User:
     def get_item(self, item_id: str, d_type:dataclass_type): #should return item or None if not found
         item = self.get_dict(d_type).get(item_id)
         if not item:
-            #TODO logger this as warning
             ItemNotFoundInUserDict(item_id, d_type)
             return None 
         return item
@@ -111,4 +109,4 @@ class User:
         raise ValueError(cai_hash, "unknown dataclass type, searched all dicts")
         return None
 
-#TODO add in data tooling way to store unassigned items that can then be later processed
+#TODO add in data tooling way to store unassigned items that can then be later processed, not sure I need this anymore

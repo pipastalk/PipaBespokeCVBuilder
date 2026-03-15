@@ -1,4 +1,4 @@
-MILESTONE 1
+MILESTONE 
     0. MANUAL uploads YAML of user's CV Resources
         [COMPLETED] 
             Examples created with AI / Personal
@@ -9,11 +9,14 @@ MILESTONE 1
             refactor data_ingestion parse/validates to use generics
             create slug id's for projects, skills, qualifications,hobbies,people
             convert lists to dicts for better lookups (skills etc)
+            add logger to generic class so all can use it
+            refactor code so searches for id can be done by the schema class not by the data_ingestion tools directly
+            create unit testing suit for User
         ---
         [TODO]
-            refactor code so searches for id can be done by the schema class not by the data_ingestion tools directly
-            refactor code to use getattr instead of registry_map/configs
+            [low] refactor code to use getattr instead of registry_map/configs
             create unit testing suit for data_ingestion
+            
         ---
 ____________________________________________________________________
             |                       |                       |
