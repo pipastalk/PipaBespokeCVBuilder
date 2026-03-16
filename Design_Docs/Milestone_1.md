@@ -12,10 +12,10 @@ MILESTONE
             add logger to generic class so all can use it
             refactor code so searches for id can be done by the schema class not by the data_ingestion tools directly
             create unit testing suit for User
+            create unit testing suit for data_ingestion
         ---
         [TODO]
             [low] refactor code to use getattr instead of registry_map/configs
-            [high]create unit testing suit for data_ingestion [ACTIVE]
             
         ---
 ____________________________________________________________________

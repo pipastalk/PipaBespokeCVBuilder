@@ -30,17 +30,31 @@ def validate_data(data,d_type:dataclass_type, user: User):
     entry_data_hash = build_cai_hash(data)
     result = user.hash_search(entry_data_hash)
     if result:
-        #TODO how are we going to handle items already existing?
-        log_and_raise(logger, logging.ERROR, f"hash found to be matching existing entry. Duplicate data entry. existing id: {result[0].id}, new entry data: {data['name']}", DuplicateItemExists) 
+        # TODO: decide whether to merge duplicates instead of failing hard.
+        logger.error(
+            f"hash found to be matching existing entry. Duplicate data entry. "
+            f"existing id: {result[0].id}, new entry data: {data.get('name', '<unnamed>')}"
+        )
+        raise DuplicateItemExists(result[0].id, d_type)
     validated_data = {}
     if not data.get('cai_hash'): #has to be before required field checks
         validated_data['cai_hash'] = build_cai_hash(data)
-        logger.info(f"cai_hash was not present in data for {d_type.value} with name {data['name']}, generated cai_hash: {validated_data['cai_hash']}")  
+        data['cai_hash'] = validated_data['cai_hash']
+        logger.info(
+            f"cai_hash was not present in data for {d_type.value} with name "
+            f"{data.get('name', '<unnamed>')}, generated cai_hash: {validated_data['cai_hash']}"
+        )
     date_fields = ['start_date', 'end_date', 'awarded_date', 'expiration_date'] #Used to ensure dates are converted to correct format
     required_fields = get_required_fields(d_type)
     for field in required_fields:  # pyright: ignore[reportOptionalIterable] - this should either raise a ValueError upon call or return valid list
-        if not data[field]:
-            log_and_raise(logger, logging.ERROR, f"Required field {field} is missing from data for {d_type.value} with name {data['name']}", ValueError)
+        if not data.get(field):
+            item_name = data.get('name', '<unnamed>')
+            log_and_raise(
+                logger,
+                logging.ERROR,
+                f"Required field {field} is missing from data for {d_type.value} with name {item_name}",
+                ValueError,
+            )
     RELATED_FIELD_MAP = {
         "related_skills": dataclass_type.SKILL,
         "related_projects": dataclass_type.PROJECT,
@@ -51,7 +65,7 @@ def validate_data(data,d_type:dataclass_type, user: User):
     for field, value in data.items():
         if field in date_fields:
             validated_data[field] = convert_date(value)
-        if field == 'id':
+        elif field == 'id':
             validated_data[field] = generate_unique_id(data, d_type, user)
         elif field in RELATED_FIELD_MAP:
             target_type = RELATED_FIELD_MAP[field]
@@ -65,7 +79,7 @@ def generate_unique_id(data, d_type, user):
     for counter in range(max_attempts):
         try:
             return user.generate_id(data, d_type, counter)
-        except DuplicateItemExists:
+        except (DuplicateItemExists, DuplicateItemIDExists):
             continue
     raise CriticalDuplicateItemExists(data['cai_hash'], d_type, max_attempts)
 
@@ -83,11 +97,11 @@ def create_missing_related_items(data: list, d_type: dataclass_type, user: User)
         item_cai_hash = build_cai_hash(item)
         search_result = user.hash_search(item_cai_hash) #returns tuple of item, dataclass_type or None if not found
         if not search_result:
-            item_object = build(validate_data(item, d_type, user), user)
+            item_object = build(validate_data(item, d_type, user))
             user.add_data(item_object, d_type)
         else: 
             item_object = search_result[0]
-        item_id = item_object[0].id
+        item_id = item_object.id
         if not user.get_item(item_id, d_type): # check for item exists but not within the dict for this dataclass. e.g. Project cai_hash in user.placements set
             log_and_raise(logger, logging.ERROR, "Wrong dataclass_type for the item", ValueError) #TODO better exception
         items_data.append(item_id)
@@ -119,7 +133,7 @@ def convert_date(date_field):
         return date_field.date()
     if not isinstance(date_field, date):
         try:
-            date_field = datetime.strptime(date_field, '%d-%m-%Y')
+            date_field = datetime.strptime(date_field, '%d-%m-%Y').date()
         except ValueError:
             raise ValueError(f"date entered as a string with invalid date format, expected DD-MM-YYYY")
     return date_field
@@ -146,7 +160,10 @@ def parse_data(file_path, d_type: dataclass_type, user: User):
         if not entry:
             log_and_raise(logger, logging.ERROR, f"Empty entry found in {d_type.value} file, please ensure all entries have data. .yaml files should not end in ---", ValueError) ##TODO could do a silent error
         validated_data = validate_data(entry, d_type, user)
-        finished_entry = build(validated_data, user)
+        if d_type == dataclass_type.PERSON:
+            finished_entry = build(validated_data, user)
+        else:
+            finished_entry = build(validated_data)
         user.add_data(finished_entry, d_type) #Keeping add outside of build to allow for single purpose function and easier unit testing
 
 def build_cai_hash(data):
@@ -268,6 +285,7 @@ example_user = User(
     phone_number="1234567890",)
 
 
+    
 placements_data = parse_data("data/CV_Resources/Personal/placements.yaml", dataclass_type.PLACEMENT, example_user)
 skills_data = parse_data("data/CV_Resources/Personal/skills.yaml", dataclass_type.SKILL, example_user)
 projects_data = parse_data("data/CV_Resources/Personal/projects.yaml", dataclass_type.PROJECT, example_user)

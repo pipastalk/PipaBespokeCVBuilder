@@ -1,5 +1,5 @@
 import pytest
-from datetime import date
+from datetime import date, datetime
 from src.models.dataclass_type import dataclass_type
 from src.models.data_ingestion import *
 from src.models.schema import *
@@ -459,44 +459,228 @@ def test_build_placement_maximum(example_maximum_placement_data, example_maximum
     assert build_placement(example_maximum_placement_data) == example_maximum_placement
 
 
-# TODO Do I need to test CAI hashing? it's just a hash of other fields?
+def test_read_yaml_file_returns_all_documents(tmp_path):
+    test_yaml = tmp_path / "multi_doc.yaml"
+    test_yaml.write_text("""name: one\n---\nname: two\n""")
+
+    data = read_yaml_file(str(test_yaml))
+
+    assert data == [{"name": "one"}, {"name": "two"}]
 
 
-def test_parse_data_with_type(mocker):
-    test_data = [
-        (example_maximum_contact_detail, dataclass_type.CONTACT_DETAILS, example_maximum_contact_detail_data),
-        (example_maximum_hobby, dataclass_type.HOBBY, example_maximum_hobby_data),
-        (example_maximum_person, dataclass_type.PERSON, example_maximum_person_data),
-        (example_maximum_project, dataclass_type.PROJECT, example_maximum_project_data),
-        (example_maximum_qualification, dataclass_type.QUALIFICATION, example_maximum_qualification_data),
-        (example_maximum_placement, dataclass_type.PLACEMENT, example_maximum_placement_data),
+def test_read_yaml_file_missing_path_raises_value_error():
+    with pytest.raises(ValueError):
+        read_yaml_file("/path/that/does/not/exist.yaml")
+
+
+def test_get_required_fields_returns_expected_values():
+    fields = get_required_fields(dataclass_type.SKILL)
+
+    assert fields == ["name", "cai_hash"]
+
+
+def test_get_required_fields_invalid_type_raises_value_error():
+    with pytest.raises(ValueError):
+        get_required_fields(None)
+
+
+def test_convert_date_none_returns_none():
+    assert convert_date(None) is None
+
+
+def test_convert_date_datetime_returns_date():
+    dt = datetime(2024, 1, 15, 8, 30)
+
+    assert convert_date(dt) == date(2024, 1, 15)
+
+
+def test_convert_date_string_valid_format():
+    assert convert_date("16-03-2026") == date(2026, 3, 16)
+
+
+def test_convert_date_string_invalid_format_raises_value_error():
+    with pytest.raises(ValueError):
+        convert_date("2026-03-16")
+
+
+def test_build_cai_hash_is_stable_for_key_order():
+    left = {"name": "python", "level": 3}
+    right = {"level": 3, "name": "python"}
+
+    assert build_cai_hash(left) == build_cai_hash(right)
+
+
+def test_generate_unique_id_retries_until_success(mocker, basic_user):
+    data = {"name": "Python", "cai_hash": "abcdef"}
+    mock_generate = mocker.patch.object(basic_user, "generate_id")
+    mock_generate.side_effect = [
+        DuplicateItemIDExists("x", dataclass_type.SKILL),
+        "python-skill-id",
     ]
-    for obj, d_type, data in test_data:
-        test_parse_data(mocker, d_type, obj, data, basic_user)
-    
-def test_parse_data(mocker, d_type, obj_example, data_example, basic_user):
-    test_data = {
-        dataclass_type.SKILL: mocker.patch("src.models.data_ingestion.build_skill"),
-        dataclass_type.PLACEMENT: mocker.patch("src.models.data_ingestion.build_placement"),
-        dataclass_type.QUALIFICATION: mocker.patch("src.models.data_ingestion.build_qualification"),
-        dataclass_type.HOBBY: mocker.patch("src.models.data_ingestion.build_hobby"),
-        dataclass_type.PROJECT: mocker.patch("src.models.data_ingestion.build_project"),
-        dataclass_type.PERSON: mocker.patch("src.models.data_ingestion.build_person"),
+
+    generated_id = generate_unique_id(data, dataclass_type.SKILL, basic_user)
+
+    assert generated_id == "python-skill-id"
+    assert mock_generate.call_count == 2
+
+
+def test_generate_unique_id_raises_critical_after_max_attempts(mocker, basic_user):
+    data = {"name": "Python", "cai_hash": "abc"}
+    mock_generate = mocker.patch.object(basic_user, "generate_id")
+    mock_generate.side_effect = DuplicateItemExists("x", dataclass_type.SKILL)
+
+    with pytest.raises(CriticalDuplicateItemExists):
+        generate_unique_id(data, dataclass_type.SKILL, basic_user)
+
+    assert mock_generate.call_count == len(data["cai_hash"])
+
+
+def test_validate_data_empty_payload_raises_value_error(basic_user):
+    with pytest.raises(ValueError):
+        validate_data({}, dataclass_type.SKILL, basic_user)
+
+
+def test_validate_data_duplicate_hash_raises_duplicate_item_exists(mocker, basic_user):
+    payload = {"name": "Python", "cai_hash": "hash123"}
+    existing = Skill(name="Python", id="skill-1", cai_hash="hash123")
+    mocker.patch.object(basic_user, "hash_search", return_value=(existing, dataclass_type.SKILL))
+
+    with pytest.raises(DuplicateItemExists):
+        validate_data(payload, dataclass_type.SKILL, basic_user)
+
+
+def test_validate_data_generates_hash_id_and_converts_date(mocker, basic_user):
+    payload = {
+        "id": "input-id",
+        "name": "Backend Engineer",
+        "job_title": "Engineer",
+        "start_date": "01-02-2024",
+        "related_skills": [{"name": "Python", "cai_hash": "skillhash"}],
     }
-    mock_read_data = mocker.patch("src.models.data_ingestion.read_data_file")
-    mock_read_data.return_value = data_example
-    mock_validate_data = mocker.patch("src.models.data_ingestion.validate_data")
-    mock_validate_data.return_value = data_example
-    mock_build = test_data[d_type]
-    mock_build.return_value = obj_example
+    mocker.patch.object(basic_user, "hash_search", return_value=None)
+    mocker.patch("src.models.data_ingestion.generate_unique_id", return_value="placement-1")
+    mocker.patch("src.models.data_ingestion.create_missing_related_items", return_value=["skill-1"])
+
+    validated = validate_data(payload, dataclass_type.PLACEMENT, basic_user)
+
+    assert validated["cai_hash"]
+    assert validated["id"] == "placement-1"
+    assert validated["start_date"] == date(2024, 2, 1)
+    assert validated["related_skills"] == ["skill-1"]
+
+
+def test_validate_data_missing_required_field_raises_value_error(mocker, basic_user):
+    payload = {"id": "skill-id", "cai_hash": "hash123"}
+    mocker.patch.object(basic_user, "hash_search", return_value=None)
+
+    with pytest.raises(ValueError):
+        validate_data(payload, dataclass_type.SKILL, basic_user)
+
+
+def test_create_missing_related_items_builds_and_adds_new_item(mocker, basic_user):
+    raw_item = {"name": "Python", "cai_hash": "skillhash"}
+    built_item = Skill(name="Python", id="python-skill-id", cai_hash="skillhash")
+    mocker.patch("src.models.data_ingestion.build_cai_hash", return_value="skillhash")
+    mocker.patch.object(basic_user, "hash_search", return_value=None)
+    mocker.patch("src.models.data_ingestion.validate_data", return_value={"name": "Python", "id": "python-skill-id", "cai_hash": "skillhash"})
+    mocker.patch("src.models.data_ingestion.build_skill", return_value=built_item)
+
+    ids = create_missing_related_items([raw_item], dataclass_type.SKILL, basic_user)
+
+    assert ids == ["python-skill-id"]
+    assert basic_user.get_item("python-skill-id", dataclass_type.SKILL) == built_item
+
+
+def test_create_missing_related_items_reuses_existing_item(mocker, basic_user):
+    existing_item = Skill(name="Python", id="python-skill-id", cai_hash="skillhash")
+    basic_user.add_data(existing_item, dataclass_type.SKILL)
+    mocker.patch("src.models.data_ingestion.build_cai_hash", return_value="skillhash")
+    mocker.patch.object(basic_user, "hash_search", return_value=(existing_item, dataclass_type.SKILL))
+    validate_spy = mocker.patch("src.models.data_ingestion.validate_data")
+
+    ids = create_missing_related_items([{"name": "Python", "cai_hash": "skillhash"}], dataclass_type.SKILL, basic_user)
+
+    assert ids == ["python-skill-id"]
+    validate_spy.assert_not_called()
+
+
+def test_create_missing_related_items_wrong_dataclass_type_raises_value_error(mocker, basic_user):
+    orphan_item = Skill(name="Python", id="python-skill-id", cai_hash="skillhash")
+    mocker.patch("src.models.data_ingestion.build_cai_hash", return_value="skillhash")
+    mocker.patch.object(basic_user, "hash_search", return_value=(orphan_item, dataclass_type.SKILL))
+
+    with pytest.raises(ValueError):
+        create_missing_related_items([{"name": "Python", "cai_hash": "skillhash"}], dataclass_type.PROJECT, basic_user)
+
+
+@pytest.mark.parametrize(
+    "d_type,builder_name,data,created",
+    [
+        (
+            dataclass_type.SKILL,
+            "build_skill",
+            {"id": "skill-id", "name": "Python", "cai_hash": "hash-skill"},
+            Skill(id="skill-id", name="Python", cai_hash="hash-skill"),
+        ),
+        (
+            dataclass_type.PROJECT,
+            "build_project",
+            {"id": "project-id", "name": "Proj", "description": "desc", "cai_hash": "hash-proj"},
+            Project(id="project-id", name="Proj", description="desc", cai_hash="hash-proj"),
+        ),
+    ],
+)
+def test_parse_data_calls_builder_and_adds_items(mocker, basic_user, d_type, builder_name, data, created):
+    mocker.patch("src.models.data_ingestion.read_yaml_file", return_value=[data])
+    mocker.patch("src.models.data_ingestion.validate_data", return_value=data)
+    mock_builder = mocker.patch(f"src.models.data_ingestion.{builder_name}", return_value=created)
+
     parse_data("fake_path.yaml", d_type, basic_user)
-    mock_read_data.assert_called_once_with("fake_path.yaml")
-    mock_validate_data.assert_called_once_with(data_example, d_type, basic_user)
-    mock_build.assert_called_once_with(data_example, basic_user)
-    #file_data = read_yaml_file(file_path)
-    #validated_data = validate_data(entry, d_type, user)
-    #finished_entry = build(validated_data, user)
-    user_dict = basic_user.get_dict(d_type)
-    assert user_dict[obj_example.id] == obj_example
+
+    mock_builder.assert_called_once_with(data)
+    assert basic_user.get_item(created.id, d_type) == created
+
+
+def test_parse_data_calls_person_builder_with_user(mocker, basic_user):
+    data = {
+        "id": "person-1",
+        "name": "Jane",
+        "cai_hash": "personhash",
+        "relation_type": "friend",
+        "is_reference": False,
+        "contact_details": {"name": "Jane"},
+    }
+    created = Person(
+        id="person-1",
+        name="Jane",
+        cai_hash="personhash",
+        relation_type="friend",
+        is_reference=False,
+        contact_details=ContactDetails(name="Jane"),
+    )
+    mocker.patch("src.models.data_ingestion.read_yaml_file", return_value=[data])
+    mocker.patch("src.models.data_ingestion.validate_data", return_value=data)
+    mock_builder = mocker.patch("src.models.data_ingestion.build_person", return_value=created)
+
+    parse_data("fake_people.yaml", dataclass_type.PERSON, basic_user)
+
+    mock_builder.assert_called_once_with(data, basic_user)
+    assert basic_user.get_item("person-1", dataclass_type.PERSON) == created
+
+
+def test_parse_data_unsupported_dataclass_type_raises_not_implemented(basic_user):
+    with pytest.raises(NotImplementedError):
+        parse_data("fake_path.yaml", dataclass_type.CONTACT_DETAILS, basic_user)
+
+
+def test_parse_data_empty_entry_raises_value_error(mocker, basic_user):
+    mocker.patch("src.models.data_ingestion.read_yaml_file", return_value=[None])
+
+    with pytest.raises(ValueError):
+        parse_data("fake_path.yaml", dataclass_type.SKILL, basic_user)
+
+
+def test_merge_matched_data_currently_returns_none(basic_user):
+    assert merge_matched_data({}, "hash", dataclass_type.SKILL, basic_user) is None
 
 
