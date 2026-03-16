@@ -163,7 +163,7 @@ def merge_matched_data(data, cai_hash, dataclass_type: dataclass_type, user: Use
 #endregion
 
 #region builds for dataclass objects
-def build_placement(validated_placement, user: User):
+def build_placement(validated_placement):
     placement = Placement(
         cai_hash=validated_placement['cai_hash'],
         id = validated_placement['id'],
@@ -178,7 +178,7 @@ def build_placement(validated_placement, user: User):
     )
     return placement
 
-def build_skill(validated_skill, user: User):
+def build_skill(validated_skill):
     skill = Skill(
         cai_hash=validated_skill['cai_hash'],
         id = validated_skill['id'],
@@ -218,7 +218,7 @@ def build_hobby(validated_hobby):
     )
     return hobby
 
-def build_qualification(validated_qualification, user: User):
+def build_qualification(validated_qualification):
     qualification = Qualification(
         cai_hash=validated_qualification['cai_hash'],
         id = validated_qualification['id'],
