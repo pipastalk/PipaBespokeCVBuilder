@@ -192,7 +192,7 @@ def build_skill(validated_skill, user: User):
     )
     return skill
 
-def build_project(validated_project, user: User):
+def build_project(validated_project):
     project = Project(
         cai_hash=validated_project['cai_hash'],
         id = validated_project['id'],
@@ -205,7 +205,7 @@ def build_project(validated_project, user: User):
     )
     return project
 
-def build_hobby(validated_hobby, user: User):
+def build_hobby(validated_hobby):
     hobby = Hobby(
         cai_hash = validated_hobby['cai_hash'],
         id = validated_hobby['id'],
