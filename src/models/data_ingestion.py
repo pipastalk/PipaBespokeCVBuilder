@@ -38,8 +38,7 @@ def validate_data(data,d_type:dataclass_type, user: User):
         raise DuplicateItemExists(result[0].id, d_type)
     validated_data = {}
     if not data.get('cai_hash'): #has to be before required field checks
-        validated_data['cai_hash'] = build_cai_hash(data)
-        data['cai_hash'] = validated_data['cai_hash']
+        validated_data['cai_hash'] = entry_data_hash
         logger.info(
             f"cai_hash was not present in data for {d_type.value} with name "
             f"{data.get('name', '<unnamed>')}, generated cai_hash: {validated_data['cai_hash']}"
@@ -49,6 +48,9 @@ def validate_data(data,d_type:dataclass_type, user: User):
     for field in required_fields:  # pyright: ignore[reportOptionalIterable] - this should either raise a ValueError upon call or return valid list
         if not data.get(field):
             item_name = data.get('name', '<unnamed>')
+            if field == 'cai_hash':
+                if validated_data.get('cai_hash'):
+                    continue #cai_hash is generated if not provided so will be in validated_data by the time this check is hit
             log_and_raise(
                 logger,
                 logging.ERROR,
@@ -66,22 +68,24 @@ def validate_data(data,d_type:dataclass_type, user: User):
         if field in date_fields:
             validated_data[field] = convert_date(value)
         elif field == 'id':
-            validated_data[field] = generate_unique_id(data, d_type, user)
+            validated_data[field] = generate_unique_id(data, d_type, user, entry_data_hash) #This will always overwrite passed id's
         elif field in RELATED_FIELD_MAP:
             target_type = RELATED_FIELD_MAP[field]
             validated_data[field] = create_missing_related_items(value, target_type, user)
         else:
             validated_data[field] = value
+    if not validated_data.get('id'):
+        validated_data['id'] = generate_unique_id(validated_data, d_type, user, entry_data_hash)
     return validated_data
 
-def generate_unique_id(data, d_type, user):
-    max_attempts = len(data['cai_hash'])
+def generate_unique_id(data, d_type, user, cai_hash):
+    max_attempts = len(cai_hash)
     for counter in range(max_attempts):
         try:
             return user.generate_id(data, d_type, counter)
         except (DuplicateItemExists, DuplicateItemIDExists):
             continue
-    raise CriticalDuplicateItemExists(data['cai_hash'], d_type, max_attempts)
+    raise CriticalDuplicateItemExists(cai_hash, d_type, max_attempts)
 
 def create_missing_related_items(data: list, d_type: dataclass_type, user: User):
     items_data = []
@@ -278,7 +282,7 @@ def build_contact_details(validated_contact_details):
 
 
 #region scratch testing
-"""
+
 example_user = User(
     name="Pippa",
     email="test@test.com",
@@ -286,13 +290,14 @@ example_user = User(
 
 
     
-placements_data = parse_data("data/CV_Resources/Personal/placements.yaml", dataclass_type.PLACEMENT, example_user)
-skills_data = parse_data("data/CV_Resources/Personal/skills.yaml", dataclass_type.SKILL, example_user)
-projects_data = parse_data("data/CV_Resources/Personal/projects.yaml", dataclass_type.PROJECT, example_user)
-hobbies_data = parse_data("data/CV_Resources/AI_Example_data/hobbies.yaml", dataclass_type.HOBBY, example_user)
-qualifications_data = parse_data("data/CV_Resources/AI_Example_data/qualifications.yaml", dataclass_type.QUALIFICATION, example_user)
-people_data = parse_data("data/CV_Resources/AI_Example_data/people.yaml", dataclass_type.PERSON, example_user)
-"""
+parse_data("data/CV_Resources/Personal/placements.yaml", dataclass_type.PLACEMENT, example_user)
+parse_data("data/CV_Resources/Personal/skills.yaml", dataclass_type.SKILL, example_user)
+parse_data("data/CV_Resources/Personal/projects.yaml", dataclass_type.PROJECT, example_user)
+parse_data("data/CV_Resources/AI_Example_data/hobbies.yaml", dataclass_type.HOBBY, example_user)
+parse_data("data/CV_Resources/AI_Example_data/qualifications.yaml", dataclass_type.QUALIFICATION, example_user)
+parse_data("data/CV_Resources/AI_Example_data/people.yaml", dataclass_type.PERSON, example_user)
+
+print("X")
 #endregion
 
 #TODO when a match is found update any null field with existing ones
