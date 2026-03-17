@@ -123,7 +123,8 @@ def link_skill_to_object(data, d_type, parent_id, user):
                     "name": skill
                 }
             if not isinstance(skill, dict): 
-                log_and_raise(logger, logging.ERROR, f"Related skills format invalid", ValueError)
+                msg = f"Related skills format invalid"
+                log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
             try:
                 validated_skill = validate_data(skill, dataclass_type.SKILL, user)
                 skill_to_link = user.get_item(validated_skill['id'], dataclass_type.SKILL)
@@ -162,14 +163,16 @@ def check_required_fields(d_type:dataclass_type, data):
         for field in required_fields:  
             if not data.get(field):
                 item_name = data.get('name', '<unnamed>')
+                msg = f"Required field {field} is missing from data for {d_type.value} with name {item_name}"
                 log_and_raise(
                     logger,
                     logging.ERROR,
-                    f"Required field {field} is missing from data for {d_type.value} with name {item_name}",
-                    ValueError,
+                    msg,
+                    ValueError(msg),
                 )
     else:
-        log_and_raise(logger, logging.ERROR, f"Unable to retrieve requried_fields. Data cannot be validated, confirm dataclass type is correct. dataclass_type:{d_type}", ValueError)
+        msg = f"Unable to retrieve requried_fields. Data cannot be validated, confirm dataclass type is correct. dataclass_type:{d_type}"
+        log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
     
     
 def convert_date(date_field):
@@ -198,13 +201,15 @@ def parse_data(file_path, d_type: dataclass_type, user: User):
     }
     build = registry_map.get(d_type)
     if not build:
-        log_and_raise(logger, logging.ERROR, f"No build function implemented for {d_type.value}", NotImplementedError)
+        msg = f"No build function implemented for {d_type.value}"
+        log_and_raise(logger, logging.ERROR, msg, NotImplementedError(msg))
         return #CRITICAL ERROR raised error should prevent hitting this return
     file_data = read_yaml_file(file_path)
     for entry in file_data:
         logger.info(f"Parsing {d_type.value} entry: {entry}")
         if not entry:
-            log_and_raise(logger, logging.ERROR, f"Empty entry found in {d_type.value} file, please ensure all entries have data. .yaml files should not end in ---", ValueError) ##TODO could do a silent error
+            msg = f"Empty entry found in {d_type.value} file, please ensure all entries have data. .yaml files should not end in ---"
+            log_and_raise(logger, logging.ERROR, msg, ValueError(msg)) ##TODO could do a silent error
         validated_data = validate_data(entry, d_type, user)
         if d_type == dataclass_type.PERSON:
             finished_entry = build(validated_data, user)

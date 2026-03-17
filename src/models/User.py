@@ -106,7 +106,8 @@ class User:
             related_items_set.add(related_item_id)
             return
         #ERROR CASE HERE ONWARDS
-        log_and_raise(logger, logging.ERROR, f"Unsupported dataclass type for skill linking: {related_d_type}", ValueError)
+        msg = f"Unsupported dataclass type for skill linking: {related_d_type}"
+        log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
         
         raise NotImplementedError("This method is not implemented yet")
     def set_link_skill_to_item(self,item_id: str, skill_id: str, d_type:dataclass_type): #checks if skill exists and if link exists with dataclass. with no matches adds skill_id to dict  
@@ -140,7 +141,5 @@ class User:
                     return v, d_type
         return None
 
-#TODO add in data tooling way to store unassigned items that can then be later processed, not sure I need this anymore
 
 #TODO check raises of custom exceptions to ensure parameters are passed
-#TODO how are we going to handle ContactDetails as they are subfields, may need a different flow. They don't really need an ID/CAI_Hash. Perhaps useful for linking placement and person but meh
