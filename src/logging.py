@@ -1,6 +1,6 @@
 import logging
 import os
-
+from src.exceptions.user_exceptions import *
 def prep_loggers():
     log_dir = "data/logs"
     os.makedirs(log_dir, exist_ok=True)
@@ -38,6 +38,6 @@ def prep_loggers():
     logic_logger.setLevel(logging.DEBUG)
 
 
-def log_and_raise(logger, level, message, exception):
+def log_and_raise(logger, level, message, exception:Exception):
     logger.log(level, message)
-    raise exception(message)
+    raise exception

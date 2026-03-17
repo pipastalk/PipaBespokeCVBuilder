@@ -43,93 +43,79 @@ def validate_data(data,d_type:dataclass_type, user: User):
             f"cai_hash was not present in data for {d_type.value} with name "
             f"{data.get('name', '<unnamed>')}, generated cai_hash: {validated_data['cai_hash']}"
         )
+    if not data.get('id'): # has to be before related_skills linking
+        try:
+            validated_data['id'] = generate_unique_id(data, d_type, user, validated_data['cai_hash'])
+        except CriticalDuplicateItemExists as e:
+            log_and_raise(logger, logging.ERROR, f"Critical duplicate item exists for {d_type.value} with cai_hash {validated_data['cai_hash']}", e)
     date_fields = ['start_date', 'end_date', 'awarded_date', 'expiration_date'] #Used to ensure dates are converted to correct format
-    required_fields = get_required_fields(d_type)
-    for field in required_fields:  # pyright: ignore[reportOptionalIterable] - this should either raise a ValueError upon call or return valid list
-        if not data.get(field):
-            item_name = data.get('name', '<unnamed>')
-            if field == 'cai_hash':
-                if validated_data.get('cai_hash'):
-                    continue #cai_hash is generated if not provided so will be in validated_data by the time this check is hit
-            log_and_raise(
-                logger,
-                logging.ERROR,
-                f"Required field {field} is missing from data for {d_type.value} with name {item_name}",
-                ValueError,
-            )
-    RELATED_FIELD_MAP = {
-        "related_skills": dataclass_type.SKILL,
-        "related_projects": dataclass_type.PROJECT,
-        "related_qualifications": dataclass_type.QUALIFICATION,
-        "related_placements": dataclass_type.PLACEMENT,
-        "related_hobbies": dataclass_type.HOBBY,
-    }       
+    check_required_fields(d_type, data)
     for field, value in data.items():
         if field in date_fields:
             validated_data[field] = convert_date(value)
-        elif field == 'id':
-            validated_data[field] = generate_unique_id(data, d_type, user, entry_data_hash) #This will always overwrite passed id's
-        elif field in RELATED_FIELD_MAP:
-            target_type = RELATED_FIELD_MAP[field]
-            validated_data[field] = create_missing_related_items(value, target_type, user)
+        elif field in "related_skills":
+            link_skill_to_object(value, d_type, validated_data['id'], user)
         else:
             validated_data[field] = value
-    if not validated_data.get('id'):
-        validated_data['id'] = generate_unique_id(validated_data, d_type, user, entry_data_hash)
     return validated_data
+
+def link_skill_to_object(data, d_type, parent_id, user):
+    if data and isinstance(data, list):
+        for skill in data:
+            if isinstance(skill, str):
+                skill = {
+                    "name": skill
+                }
+            if not isinstance(skill, dict): 
+                log_and_raise(logger, logging.ERROR, f"Related skills format invalid", ValueError)
+            try:
+                validated_skill = validate_data(skill, dataclass_type.SKILL, user)
+                skill_to_link = user.get_item(validated_skill['id'], dataclass_type.SKILL)
+            except DuplicateItemExists as e:   
+                skill_to_link = user.get_item(e.item_id, dataclass_type.SKILL)
+                logger.info(f"Related skill already exists, linking to existing skill with id {skill_to_link.id}") 
+            if not isinstance(skill_to_link, Skill):
+                skill_to_link = build_skill(validated_skill)
+                user.add_data(skill_to_link, dataclass_type.SKILL)
+            user.add_skill_link(d_type, parent_id, skill_to_link.id) #type: ignore should be confirmed by check if exists
 
 def generate_unique_id(data, d_type, user, cai_hash):
     max_attempts = len(cai_hash)
     for counter in range(max_attempts):
         try:
-            return user.generate_id(data, d_type, counter)
+            return user.generate_id(data, d_type, counter, cai_hash)
         except (DuplicateItemExists, DuplicateItemIDExists):
             continue
     raise CriticalDuplicateItemExists(cai_hash, d_type, max_attempts)
-
-def create_missing_related_items(data: list, d_type: dataclass_type, user: User):
-    items_data = []
-    registry_map = {
-        dataclass_type.PROJECT: build_project,
-        dataclass_type.PLACEMENT: build_placement,
-        dataclass_type.QUALIFICATION: build_qualification,
-        dataclass_type.HOBBY: build_hobby,
-        dataclass_type.SKILL: build_skill
-    }
-    build = registry_map[d_type]
-    for item in data:
-        item_cai_hash = build_cai_hash(item)
-        search_result = user.hash_search(item_cai_hash) #returns tuple of item, dataclass_type or None if not found
-        if not search_result:
-            item_object = build(validate_data(item, d_type, user))
-            user.add_data(item_object, d_type)
-        else: 
-            item_object = search_result[0]
-        item_id = item_object.id
-        if not user.get_item(item_id, d_type): # check for item exists but not within the dict for this dataclass. e.g. Project cai_hash in user.placements set
-            log_and_raise(logger, logging.ERROR, "Wrong dataclass_type for the item", ValueError) #TODO better exception
-        items_data.append(item_id)
-
-    return items_data
         
-def get_required_fields(d_type:dataclass_type):
-    registry_map = {
-        dataclass_type.SKILL: ['name', 'cai_hash'],
-        dataclass_type.QUALIFICATION: ['name', 'studied_at', 'awarded_date', 'related_skills', 'cai_hash'],
+def check_required_fields(d_type:dataclass_type, data):
+    registry_map = { #cai_hash and id are auto-generated so not included in source data checks
+        dataclass_type.SKILL: ['name'],
+        dataclass_type.QUALIFICATION: ['name', 'studied_at', 'awarded_date', 'related_skills'],
         dataclass_type.CONTACT_DETAILS: ['name'],
-        dataclass_type.PERSON: ['name', 'relation_type', 'is_reference', 'cai_hash'],
-        dataclass_type.PROJECT: ['name', 'description', 'cai_hash'],
-        dataclass_type.PLACEMENT: ['name', 'job_title', 'start_date', 'related_skills', 'cai_hash'],
+        dataclass_type.PERSON: ['name', 'relation_type', 'is_reference'],
+        dataclass_type.PROJECT: ['name', 'description'],
+        dataclass_type.PLACEMENT: ['name', 'job_title', 'start_date', 'related_skills'],
         dataclass_type.LOCATION: ['city', 'country'],
         # TODO dataclass_type.ADVERTSOURCE: [...],
         # TODO dataclass_type.ADVERT: [...],
-        dataclass_type.HOBBY: ['name', 'description', 'cai_hash'],
+        dataclass_type.HOBBY: ['name', 'description'],
     }
-    required_fields = registry_map.get(d_type)
-    if not required_fields:
+    if registry_map.get(d_type) and isinstance(registry_map[d_type], list):
+        required_fields = registry_map[d_type]
+        for field in required_fields:  
+            if not data.get(field):
+                item_name = data.get('name', '<unnamed>')
+                log_and_raise(
+                    logger,
+                    logging.ERROR,
+                    f"Required field {field} is missing from data for {d_type.value} with name {item_name}",
+                    ValueError,
+                )
+    else:
         log_and_raise(logger, logging.ERROR, f"Unable to retrieve requried_fields. Data cannot be validated, confirm dataclass type is correct. dataclass_type:{d_type}", ValueError)
-    return required_fields
-
+    
+    
 def convert_date(date_field):
     if not date_field:
         return None
@@ -184,7 +170,7 @@ def merge_matched_data(data, cai_hash, dataclass_type: dataclass_type, user: Use
 #endregion
 
 #region builds for dataclass objects
-def build_placement(validated_placement):
+def build_placement(validated_placement) -> Placement:
     placement = Placement(
         cai_hash=validated_placement['cai_hash'],
         id = validated_placement['id'],
@@ -192,14 +178,14 @@ def build_placement(validated_placement):
         job_title=validated_placement['job_title'],
         start_date=validated_placement['start_date'],
         end_date=validated_placement.get('end_date'),
-        project_references=validated_placement['related_projects'] if 'related_projects' in validated_placement else set(),
+        related_projects=validated_placement['related_projects'] if 'related_projects' in validated_placement else set(),
         reference_contacts=validated_placement['reference_contacts'] if 'reference_contacts' in validated_placement else set(),
         related_skills=validated_placement['related_skills'] if 'related_skills' in validated_placement else set(),
         reason_for_leaving=validated_placement['reason_for_leaving'] if 'reason_for_leaving' in validated_placement else None,
     )
     return placement
 
-def build_skill(validated_skill):
+def build_skill(validated_skill) -> Skill:
     skill = Skill(
         cai_hash=validated_skill['cai_hash'],
         id = validated_skill['id'],
@@ -213,7 +199,7 @@ def build_skill(validated_skill):
     )
     return skill
 
-def build_project(validated_project):
+def build_project(validated_project) -> Project:
     project = Project(
         cai_hash=validated_project['cai_hash'],
         id = validated_project['id'],
@@ -226,7 +212,7 @@ def build_project(validated_project):
     )
     return project
 
-def build_hobby(validated_hobby):
+def build_hobby(validated_hobby) -> Hobby:
     hobby = Hobby(
         cai_hash = validated_hobby['cai_hash'],
         id = validated_hobby['id'],
@@ -239,7 +225,7 @@ def build_hobby(validated_hobby):
     )
     return hobby
 
-def build_qualification(validated_qualification):
+def build_qualification(validated_qualification) -> Qualification:
     qualification = Qualification(
         cai_hash=validated_qualification['cai_hash'],
         id = validated_qualification['id'],
@@ -254,7 +240,7 @@ def build_qualification(validated_qualification):
     )
     return qualification
 
-def build_person(validated_person, user: User): #Validates and builds contact details within Person.
+def build_person(validated_person, user: User) -> Person: #Validates and builds contact details within Person.
     validated_contact_data = validate_data(validated_person['contact_details'], dataclass_type.CONTACT_DETAILS, user)    
     person = Person(
         cai_hash=validated_person['cai_hash'],
@@ -268,7 +254,7 @@ def build_person(validated_person, user: User): #Validates and builds contact de
     return person
 
 #contact details doesn't parse as they are provided within other dataclasses
-def build_contact_details(validated_contact_details):
+def build_contact_details(validated_contact_details) -> ContactDetails:
     contact_details = ContactDetails(
         name=validated_contact_details['name'],
         email=validated_contact_details['email'] if 'email' in validated_contact_details else None,

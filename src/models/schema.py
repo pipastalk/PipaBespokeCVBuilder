@@ -14,6 +14,7 @@ class Skill:
     related_placements: set[str] = field(default_factory=set)
     related_projects: set[str] = field(default_factory=set)
     related_qualifications: set[str] = field(default_factory=set)
+    related_hobbies: set[str] = field(default_factory=set)
 @dataclass
 class Qualification:
     id: str
@@ -62,7 +63,7 @@ class Placement:
     cai_hash: str
     end_date: date
     reason_for_leaving: Optional[str] = None
-    project_references: set[str] = field(default_factory=set)
+    related_projects: set[str] = field(default_factory=set)
     reference_contacts: set[str] = field(default_factory=set)
     related_skills: set[str] = field(default_factory=set)
 @dataclass

@@ -1,7 +1,7 @@
 from src.models.schema import *
 from src.exceptions.user_exceptions import *
 from src.models.dataclass_type import dataclass_type
-
+from src.logging import log_and_raise
 #region logging setup
 logger = logging.getLogger(__name__)
 #endregion
@@ -48,31 +48,67 @@ class User:
             raise ValueError(f"Unsupported dataclass type: {d_type}")
         return d
         
-    def generate_id(self, data, d_type:dataclass_type, hash_suffix_length=0):
-        if hash_suffix_length > len(data['cai_hash']):
-            raise ValueError("suffix asked for longer than the source data from cai_hash")
+    def generate_id(self, data, d_type:dataclass_type, hash_suffix_length=0, cai_hash=None): #I don't like passing cai_hash manually but it's solving a headache with linking skills
+        if not cai_hash:
+            cai_hash = data['cai_hash']
+        if hash_suffix_length > len(cai_hash):
+            raise ValueError("suffix asked for longer than the  source data from cai_hash")
         registry_map = {
             dataclass_type.SKILL: data['name'],
             dataclass_type.QUALIFICATION: data['name'],
-            dataclass_type.PROJECT: f"{data['name']}-{data['cai_hash'][:4]}",  #adds short hash to help differentiate projects with same name
-            dataclass_type.PLACEMENT: f"{data['name']}-{data['job_title']}", #adds job title to help differentiate placements with same company name
+            dataclass_type.PROJECT: f"{data['name']}-{cai_hash[:4]}",  #adds short hash to help differentiate projects with same name
+            dataclass_type.PLACEMENT: f"{data['name']}-{data['job_title'] if 'job_title' in data else 'INVALID'}", #adds job title to help differentiate placements with same company name
             dataclass_type.HOBBY: data['name'],
-            dataclass_type.PERSON: data['cai_hash']
+            dataclass_type.PERSON: cai_hash,
+            dataclass_type.CONTACT_DETAILS: f"{cai_hash}-CONTACT_DETAILS", # feels odd generating this as it's a subfield of PERSON
         }
-        unconverted_id = registry_map.get(d_type)
-        id = str(unconverted_id).lower().replace(" ", "_") + data['cai_hash'][0:hash_suffix_length] + "-" + d_type.value.upper()
+        unconverted_id: str = registry_map.get(d_type, "-INVALID") 
+        if unconverted_id.endswith("-INVALID"):
+            msg = f"Invalid data for ID generation in {d_type.value}: {data['name']}, e.g. missing job title for placement"
+            log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
+        id = str(unconverted_id).lower().replace(" ", "_") + cai_hash[0:hash_suffix_length] + "-" + d_type.value.upper()
         duplicate = self.get_item(id, d_type)
         if duplicate:
-            raise DuplicateItemIDExists(f"Duplicate entry found in {d_type.value}", duplicate.id)
+            log_and_raise(logger, logging.ERROR, f"Duplicate entry found in {d_type.value} with id {id}", DuplicateItemIDExists(item_id=id, d_type=d_type))
         return id
     
     def get_item(self, item_id: str, d_type:dataclass_type): #should return item or None if not found
         item = self.get_dict(d_type).get(item_id)
         if not item:
-            ItemNotFoundInUserDict(item_id, d_type)
             return None 
         return item
-    
+    def get_item_unknwn_type(self, item_id: str): #returns tuple of item, dataclass_type or None if not found
+        registry_map = [
+            (dataclass_type.SKILL, self.skills),
+            (dataclass_type.QUALIFICATION, self.qualifications),
+            (dataclass_type.PROJECT, self.projects),
+            (dataclass_type.PLACEMENT, self.placements),
+            (dataclass_type.HOBBY, self.hobbies),
+            (dataclass_type.PERSON, self.people),
+        ]
+        for d_type, d in registry_map:
+            item = d.get(item_id)
+            if item:
+                return item, d_type
+        return None
+    def add_skill_link(self, related_d_type:dataclass_type, related_item_id: str, skill_id: str):
+        skill: Skill = self.get_item(skill_id, dataclass_type.SKILL) #type: ignore
+        if not skill:
+            log_and_raise(logger, logging.ERROR, f"Skill with id {skill_id} not found when trying to link to {related_d_type.value} with id {related_item_id}", SkillNotFoundInUserDict)
+        registry_map = {
+            dataclass_type.QUALIFICATION: skill.related_qualifications,
+            dataclass_type.PROJECT: skill.related_projects,
+            dataclass_type.PLACEMENT: skill.related_placements,
+            dataclass_type.HOBBY: skill.related_hobbies,
+        }
+        related_items_set = registry_map.get(related_d_type)
+        if isinstance(related_items_set, set): #Expected True
+            related_items_set.add(related_item_id)
+            return
+        #ERROR CASE HERE ONWARDS
+        log_and_raise(logger, logging.ERROR, f"Unsupported dataclass type for skill linking: {related_d_type}", ValueError)
+        
+        raise NotImplementedError("This method is not implemented yet")
     def set_link_skill_to_item(self,item_id: str, skill_id: str, d_type:dataclass_type): #checks if skill exists and if link exists with dataclass. with no matches adds skill_id to dict  
         item = self._validate_link_data(item_id, skill_id, d_type)
         item.related_skills.add(skill_id)  
@@ -105,3 +141,6 @@ class User:
         return None
 
 #TODO add in data tooling way to store unassigned items that can then be later processed, not sure I need this anymore
+
+#TODO check raises of custom exceptions to ensure parameters are passed
+#TODO how are we going to handle ContactDetails as they are subfields, may need a different flow. They don't really need an ID/CAI_Hash. Perhaps useful for linking placement and person but meh
