@@ -4,6 +4,9 @@ import os
 import yaml
 import logging
 from datetime import datetime, date
+import phonenumbers
+from email_validator import validate_email, EmailNotValidError
+from urllib.parse import urlparse
 
 from src.models.dataclass_type import dataclass_type
 from src.models.schema import *
@@ -24,9 +27,62 @@ def read_yaml_file(file_path):
         data = list(yaml.safe_load_all(file))
     return data
 
-def validate_data(data,d_type:dataclass_type, user: User):
+def validate_contact_details(data):
     if not data:
-        log_and_raise(logger, logging.ERROR, "no data passed to validate", ValueError)
+        log_and_raise(logger, logging.ERROR, "no data passed to validate contact details", ValueError())
+    validated_data = {}
+    check_required_fields(dataclass_type.CONTACT_DETAILS, data)
+    validated_data['name'] = data.get('name')
+    email = data.get('email')
+    if email:
+        validated_data['email'] = email
+        try:
+            validated_email = validate_email(email)
+        except EmailNotValidError as e:
+            log_and_raise(logger, logging.ERROR, f"Invalid email address: {email}", e)
+        
+    phone_number = data.get('phone_number')
+    if phone_number:
+        validated_data['phone_number'] = phone_number
+        parsed_number = phonenumbers.parse(phone_number, "UK")
+        if not phonenumbers.is_valid_number(parsed_number):
+            log_and_raise(logger, logging.ERROR, f"Invalid phone number: {phone_number}", ValueError())
+    linkedin_link = data.get('linkedin')
+    if linkedin_link:
+        if not is_valid_url(linkedin_link):
+            log_and_raise(logger, logging.ERROR, f"Invalid LinkedIn URL: {linkedin_link}", ValueError())
+        else:
+            validated_data['linkedin'] = linkedin_link
+    github_link = data.get('github')
+    if github_link:
+        if not is_valid_url(github_link):
+            log_and_raise(logger, logging.ERROR, f"Invalid GitHub URL: {github_link}", ValueError())
+        else:
+            validated_data['github'] = github_link
+    other_links = data.get('other_links')
+    if other_links and isinstance(other_links, list):
+        validated_other_links = []
+        for link in other_links:
+            if not is_valid_url(link):
+                log_and_raise(logger, logging.ERROR, f"Invalid URL in other_links: {link}", ValueError())
+            else:
+                validated_other_links.append(link)
+        validated_data['other_links'] = validated_other_links
+    return validated_data
+
+def is_valid_url(url):
+    try:
+        result = urlparse(url)
+        # Check if the scheme (http/https) and the domain (netloc) are present
+        return all([result.scheme, result.netloc])
+    except ValueError:
+        return False
+#endregion
+def validate_data(data,d_type:dataclass_type, user: User):
+    if d_type == dataclass_type.CONTACT_DETAILS:
+        validate_contact_details(data)
+    if not data:
+        log_and_raise(logger, logging.ERROR, "no data passed to validate", ValueError())
     entry_data_hash = build_cai_hash(data)
     result = user.hash_search(entry_data_hash)
     if result:
