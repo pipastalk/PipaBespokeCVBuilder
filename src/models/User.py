@@ -66,7 +66,7 @@ class User:
         if unconverted_id.endswith("-INVALID"):
             msg = f"Invalid data for ID generation in {d_type.value}: {data['name']}, e.g. missing job title for placement"
             log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
-        id = str(unconverted_id).lower().replace(" ", "_") + cai_hash[0:hash_suffix_length] + "-" + d_type.value.upper()
+        id = str(unconverted_id).lower().replace(" ", "_") + "-" + cai_hash[0:hash_suffix_length] + "-" + d_type.value.upper()
         if d_type == dataclass_type.CONTACT_DETAILS:
             return id # Contacts never are enetered into a colelction, no need for unique checks 
         duplicate = self.get_item(id, d_type)
