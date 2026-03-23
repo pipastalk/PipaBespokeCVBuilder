@@ -31,7 +31,7 @@ class Qualification:
     tags: set[str] = field(default_factory=set)
 @dataclass
 class ContactDetails:
-    name: str
+    name: Optional[str] = None
     email: Optional[str] = None
     phone_number: Optional[str] = None
     linkedin: Optional[str] = None
@@ -89,9 +89,9 @@ class Advert:
     placement_location: Location
     working_pattern: str #maybe could enum this later, remote,hybrid,flex,shifts etc
     contact_details: ContactDetails
-    advertStyle: Enum #e.g. formal, informal, creative, etc. 
-    required_skills: set["Skill"] = field(default_factory=set)
-    desired_skills: set["Skill"] = field(default_factory=set)
+    advertStyle: str #e.g. formal, informal, creative, etc.
+    required_skills: set[str] = field(default_factory=set)
+    desired_skills: set[str] = field(default_factory=set)
 @dataclass
 class Hobby:
     id: str

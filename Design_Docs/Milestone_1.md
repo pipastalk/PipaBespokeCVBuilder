@@ -38,9 +38,11 @@ ____________V_______________________V_______________________V_________
     2. LLM: Inject: job advert text + all skills titles
         Prompt: "Return skills from the list relevant to this job"
         [COMPLETED]
+            PRIOIRTY research Pydantic
+            Build text extration from webpage text
+
         ---
         [TODO]
-            PRIOIRTY research Pydantic
             Build litellm function to support uploading file
             Build tool to get Skills from user object and a format in which the llm likes it being uploaded (maybe pydantic?)
             Build unit test

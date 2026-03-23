@@ -412,12 +412,88 @@ def test_build_contact_details_minimum(example_minimum_contact_detail_data, exam
 def test_build_contact_details_maximum(example_maximum_contact_detail_data,example_maximum_contact_detail):
     assert build_contact_details(example_maximum_contact_detail_data) == example_maximum_contact_detail 
 
+
+def test_validate_contact_details_empty_returns_blank_contact_fields():
+    result = validate_contact_details(None)
+
+    assert result == {
+        "name": None,
+        "email": None,
+        "phone_number": None,
+        "linkedin": None,
+        "github": None,
+        "other_links": None,
+    }
+
+
+def test_build_contact_details_none_returns_blank_contact_details():
+    result = build_contact_details(None)
+
+    assert result == ContactDetails(
+        name=None,
+        email=None,
+        phone_number=None,
+        linkedin=None,
+        github=None,
+        other_links=None,
+    )
+
 def test_build_person_minimum(example_minimum_person_data, example_minimum_person, basic_user):
     assert build_person(example_minimum_person_data, basic_user) == example_minimum_person
 
 
 def test_build_person_maximum(example_maximum_person_data, example_maximum_person, basic_user):
     assert build_person(example_maximum_person_data, basic_user) == example_maximum_person
+
+
+def test_build_person_without_contact_details_builds_blank_contact_details(basic_user):
+    data = {
+        "cai_hash": "ghi789",
+        "id": "person3",
+        "name": "No Contact Person",
+        "relation_type": "colleague",
+        "is_reference": False,
+    }
+
+    person = build_person(data, basic_user)
+
+    assert person.contact_details == ContactDetails(
+        name=None,
+        email=None,
+        phone_number=None,
+        linkedin=None,
+        github=None,
+        other_links=None,
+    )
+
+
+def test_build_advert_without_contact_details_builds_blank_contact_details(basic_user):
+    data = {
+        "advert_title": "Data Analyst",
+        "advert_description": "Analyse business data and report insights.",
+        "source": {
+            "source_path": "https://example.com/job.html",
+            "sourced_from": "example.com",
+            "source_type": AdvertSourceType.WEBSITE,
+        },
+        "placement_location": {
+            "city": "London",
+            "country": "GB",
+        },
+        "working_pattern": "Hybrid",
+        "advertStyle": "formal",
+    }
+
+    advert = build_advert(data, basic_user)
+
+    assert advert.contact_details == ContactDetails(
+        name=None,
+        email=None,
+        phone_number=None,
+        linkedin=None,
+        github=None,
+        other_links=None,
+    )
 
 
 def test_build_qualification_minimum(example_minimum_qualification_data, example_minimum_qualification):

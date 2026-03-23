@@ -30,10 +30,18 @@ def read_yaml_file(file_path):
     return data
 
 def validate_contact_details(data):
+    blank_contact_details: dict[str, object | None] = {
+        'name': None,
+        'email': None,
+        'phone_number': None,
+        'linkedin': None,
+        'github': None,
+        'other_links': None,
+    }
     if not data:
-        log_and_raise(logger, logging.ERROR, "no data passed to validate contact details", ValueError())
-    validated_data = {}
-    check_required_fields(dataclass_type.CONTACT_DETAILS, data)
+        logger.info("No data passed to validate contact details")
+        return blank_contact_details
+    validated_data = dict(blank_contact_details)
     validated_data['name'] = data.get('name')
     email = data.get('email')
     if email:
@@ -131,7 +139,7 @@ def validate_advert(data):
         'advertStyle': data.get('advertStyle'),
         'source': validate_advert_source(data.get('source')),
         'placement_location': validate_location(data.get('placement_location')),
-        'contact_details': validate_contact_details(data.get('contact_details')),
+        'contact_details': validate_contact_details(data.get('contact_details', {})),
     }
 
     # Skills are intentionally kept as raw names for later comparison with user skill names.
@@ -158,11 +166,10 @@ def is_valid_url(url):
         return False
 #endregion
 def validate_data(data,d_type:dataclass_type, user: User):
-    if not data:
-        log_and_raise(logger, logging.ERROR, "no data passed to validate", ValueError())
-
     if d_type == dataclass_type.CONTACT_DETAILS:
         return validate_contact_details(data)
+    if not data:
+        log_and_raise(logger, logging.ERROR, "no data passed to validate", ValueError())
     if d_type == dataclass_type.LOCATION:
         return validate_location(data)
     if d_type == dataclass_type.ADVERTSOURCE:
@@ -238,7 +245,7 @@ def check_required_fields(d_type:dataclass_type, data):
     registry_map = { #cai_hash and id are auto-generated so not included in source data checks
         dataclass_type.SKILL: ['name'],
         dataclass_type.QUALIFICATION: ['name', 'studied_at', 'awarded_date', 'related_skills'],
-        dataclass_type.CONTACT_DETAILS: ['name'],
+        dataclass_type.CONTACT_DETAILS: [],
         dataclass_type.PERSON: ['name', 'relation_type', 'is_reference'],
         dataclass_type.PROJECT: ['name', 'description'],
         dataclass_type.PLACEMENT: ['name', 'job_title', 'start_date', 'related_skills'],
@@ -250,7 +257,6 @@ def check_required_fields(d_type:dataclass_type, data):
             'source',
             'placement_location',
             'working_pattern',
-            'contact_details',
             'advertStyle',
         ],
         dataclass_type.HOBBY: ['name', 'description'],
@@ -418,7 +424,7 @@ def build_qualification(validated_qualification) -> Qualification:
     return qualification
 
 def build_person(validated_person, user: User) -> Person: #Validates and builds contact details within Person.
-    validated_contact_data = validate_data(validated_person['contact_details'], dataclass_type.CONTACT_DETAILS, user)    
+    validated_contact_data = validate_data(validated_person.get('contact_details', {}), dataclass_type.CONTACT_DETAILS, user)
     person = Person(
         cai_hash=validated_person['cai_hash'],
         id = validated_person['id'],
@@ -432,8 +438,9 @@ def build_person(validated_person, user: User) -> Person: #Validates and builds 
 
 #contact details doesn't parse as they are provided within other dataclasses
 def build_contact_details(validated_contact_details) -> ContactDetails:
+    validated_contact_details = validated_contact_details or {}
     contact_details = ContactDetails(
-        name=validated_contact_details['name'],
+        name=validated_contact_details['name'] if 'name' in validated_contact_details else None,
         email=validated_contact_details['email'] if 'email' in validated_contact_details else None,
         phone_number=validated_contact_details['phone_number'] if 'phone_number' in validated_contact_details else None,
         linkedin=validated_contact_details['linkedin'] if 'linkedin' in validated_contact_details else None,
@@ -485,7 +492,7 @@ def build_advert(validated_advert, user: User) -> Advert:
     if not source_data.get('source_type') and source_data.get('source_path'):
         source_data['source_type'] = determine_advert_type(source_data['source_path'])
 
-    contact_data = validate_data(validated_advert['contact_details'], dataclass_type.CONTACT_DETAILS, user)
+    contact_data = validate_data(validated_advert.get('contact_details', {}), dataclass_type.CONTACT_DETAILS, user)
     source = build_advert_source(source_data)
     placement_location = build_location(validated_advert['placement_location'])
     advert = Advert(
@@ -503,20 +510,19 @@ def build_advert(validated_advert, user: User) -> Advert:
     
 #endregion 
 #region scratch testing
+if __name__ == "__main__":
+    example_user = User(
+        name="Pippa",
+        email="test@test.com",
+        phone_number="1234567890",
+    )
 
-example_user = User(
-    name="Pippa",
-    email="test@test.com",
-    phone_number="1234567890",)
+    parse_data("data/CV_Resources/Personal/placements.yaml", dataclass_type.PLACEMENT, example_user)
+    parse_data("data/CV_Resources/Personal/skills.yaml", dataclass_type.SKILL, example_user)
+    parse_data("data/CV_Resources/Personal/projects.yaml", dataclass_type.PROJECT, example_user)
+    parse_data("data/CV_Resources/AI_Example_data/hobbies.yaml", dataclass_type.HOBBY, example_user)
+    parse_data("data/CV_Resources/AI_Example_data/qualifications.yaml", dataclass_type.QUALIFICATION, example_user)
+    parse_data("data/CV_Resources/AI_Example_data/people.yaml", dataclass_type.PERSON, example_user)
 
-
-    
-parse_data("data/CV_Resources/Personal/placements.yaml", dataclass_type.PLACEMENT, example_user)
-parse_data("data/CV_Resources/Personal/skills.yaml", dataclass_type.SKILL, example_user)
-parse_data("data/CV_Resources/Personal/projects.yaml", dataclass_type.PROJECT, example_user)
-parse_data("data/CV_Resources/AI_Example_data/hobbies.yaml", dataclass_type.HOBBY, example_user)
-parse_data("data/CV_Resources/AI_Example_data/qualifications.yaml", dataclass_type.QUALIFICATION, example_user)
-parse_data("data/CV_Resources/AI_Example_data/people.yaml", dataclass_type.PERSON, example_user)
-
-print("X")
+    print("X")
 #endregion

@@ -1,5 +1,6 @@
 data/CV_Resources/Personal/
 data/logs/
+data/outputs/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
