@@ -8,6 +8,7 @@ import phonenumbers
 from email_validator import validate_email, EmailNotValidError
 from urllib.parse import urlparse
 
+from src.exceptions.data_ingestion_exceptions import *
 from src.models.dataclass_type import dataclass_type
 from src.models.schema import *
 from src.models.User import User
@@ -86,12 +87,9 @@ def validate_data(data,d_type:dataclass_type, user: User):
     entry_data_hash = build_cai_hash(data)
     result = user.hash_search(entry_data_hash)
     if result:
-        # TODO: decide whether to merge duplicates instead of failing hard.
-        logger.error(
-            f"hash found to be matching existing entry. Duplicate data entry. "
-            f"existing id: {result[0].id}, new entry data: {data.get('name', '<unnamed>')}"
-        )
-        raise DuplicateItemExists(result[0].id, d_type)
+        matched_id = result[0].id
+        matched_d_type = result[1]
+        merge_matched_data(data, matched_id, matched_d_type, user)
     validated_data = {}
     if not data.get('cai_hash'): #has to be before required field checks
         validated_data['cai_hash'] = entry_data_hash
@@ -128,7 +126,7 @@ def link_skill_to_object(data, d_type, parent_id, user):
             try:
                 validated_skill = validate_data(skill, dataclass_type.SKILL, user)
                 skill_to_link = user.get_item(validated_skill['id'], dataclass_type.SKILL)
-            except DuplicateItemExists as e:   
+            except (DuplicateItemExists, MergedDataException) as e:   
                 skill_to_link = user.get_item(e.item_id, dataclass_type.SKILL)
                 logger.info(f"Related skill already exists, linking to existing skill with id {skill_to_link.id}") 
             if not isinstance(skill_to_link, Skill):
@@ -141,7 +139,12 @@ def generate_unique_id(data, d_type, user, cai_hash):
     for counter in range(max_attempts):
         try:
             return user.generate_id(data, d_type, counter, cai_hash)
-        except (DuplicateItemExists, DuplicateItemIDExists):
+        except (DuplicateItemExists, DuplicateItemIDExists) as e:
+            discovered_duplicate = user.get_item(e.item_id, d_type)
+            if d_type == dataclass_type.SKILL:
+                logger.info(f"Duplicate entry found with matching hash, merging data for {d_type.value} with id {discovered_duplicate.id}")
+                merge_matched_data(data, e.item_id, e.d_type, user)
+                return discovered_duplicate.id
             continue
     raise CriticalDuplicateItemExists(cai_hash, d_type, max_attempts)
         
@@ -161,7 +164,7 @@ def check_required_fields(d_type:dataclass_type, data):
     if registry_map.get(d_type) and isinstance(registry_map[d_type], list):
         required_fields = registry_map[d_type]
         for field in required_fields:  
-            if not data.get(field):
+            if data.get(field) is None:
                 item_name = data.get('name', '<unnamed>')
                 msg = f"Required field {field} is missing from data for {d_type.value} with name {item_name}"
                 log_and_raise(
@@ -210,7 +213,10 @@ def parse_data(file_path, d_type: dataclass_type, user: User):
         if not entry:
             msg = f"Empty entry found in {d_type.value} file, please ensure all entries have data. .yaml files should not end in ---"
             log_and_raise(logger, logging.ERROR, msg, ValueError(msg)) ##TODO could do a silent error
-        validated_data = validate_data(entry, d_type, user)
+        try:
+            validated_data = validate_data(entry, d_type, user)
+        except MergedDataException as e:
+            continue #Skipping as no need to build the entry, data was existing and merged.
         if d_type == dataclass_type.PERSON:
             finished_entry = build(validated_data, user)
         else:
@@ -225,9 +231,19 @@ def build_cai_hash(data):
     # Return the hex digest as the unique identifier
     return hash_obj.hexdigest()
 
-def merge_matched_data(data, cai_hash, dataclass_type: dataclass_type, user: User):
-    #TODO 
-    pass
+def merge_matched_data(data, item_id, d_type: dataclass_type, user: User):
+    existing_item  = user.get_item(item_id, d_type)
+    if existing_item is None:
+        msg = f"Unexpected error during merge: no existing item found via hash search with {data['name']} for {d_type.value}"
+        log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
+    else:
+        none_fields = [field for field in existing_item.__dataclass_fields__ if getattr(existing_item, field) is None]
+        for field in none_fields:
+            if field in data and data[field] is not None:
+                setattr(existing_item, field, data[field])
+                logger.info(f"Merged field {field} for {d_type.value} with id {existing_item.id}")
+        raise MergedDataException(existing_item.id, d_type)
+    
 #endregion
 
 #region builds for dataclass objects

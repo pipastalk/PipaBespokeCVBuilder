@@ -60,13 +60,15 @@ class User:
             dataclass_type.PLACEMENT: f"{data['name']}-{data['job_title'] if 'job_title' in data else 'INVALID'}", #adds job title to help differentiate placements with same company name
             dataclass_type.HOBBY: data['name'],
             dataclass_type.PERSON: cai_hash,
-            dataclass_type.CONTACT_DETAILS: f"{cai_hash}-CONTACT_DETAILS", # feels odd generating this as it's a subfield of PERSON
+            dataclass_type.CONTACT_DETAILS: cai_hash
         }
         unconverted_id: str = registry_map.get(d_type, "-INVALID") 
         if unconverted_id.endswith("-INVALID"):
             msg = f"Invalid data for ID generation in {d_type.value}: {data['name']}, e.g. missing job title for placement"
             log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
         id = str(unconverted_id).lower().replace(" ", "_") + cai_hash[0:hash_suffix_length] + "-" + d_type.value.upper()
+        if d_type == dataclass_type.CONTACT_DETAILS:
+            return id # Contacts never are enetered into a colelction, no need for unique checks 
         duplicate = self.get_item(id, d_type)
         if duplicate:
             log_and_raise(logger, logging.ERROR, f"Duplicate entry found in {d_type.value} with id {id}", DuplicateItemIDExists(item_id=id, d_type=d_type))
@@ -77,7 +79,7 @@ class User:
         if not item:
             return None 
         return item
-    def get_item_unknwn_type(self, item_id: str): #returns tuple of item, dataclass_type or None if not found
+    def get_item_unknown_type(self, item_id: str): #returns tuple of item, dataclass_type or None if not found
         registry_map = [
             (dataclass_type.SKILL, self.skills),
             (dataclass_type.QUALIFICATION, self.qualifications),
@@ -110,21 +112,6 @@ class User:
         log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
         
         raise NotImplementedError("This method is not implemented yet")
-    def set_link_skill_to_item(self,item_id: str, skill_id: str, d_type:dataclass_type): #checks if skill exists and if link exists with dataclass. with no matches adds skill_id to dict  
-        item = self._validate_link_data(item_id, skill_id, d_type)
-        item.related_skills.add(skill_id)  
-    
-    def _validate_link_data(self, item_id: str, skill_id: str, d_type:dataclass_type): #helper for set_link_skill_to_item
-        item = self.get_item(item_id, d_type)
-        if not item:
-            raise ItemNotFoundInUserDict(item_id, d_type)
-        skill = self.get_item(skill_id, dataclass_type.SKILL)
-        if not skill:
-            raise SkillNotFoundInUserDict(skill_id,d_type)
-        existing_skill_check = self.get_item(skill_id, d_type)
-        if existing_skill_check:
-            raise SkillLinkAlreadyExists(skill_id, item_id)
-        return item
 
     def hash_search(self, cai_hash):
         reigtry_map = [
