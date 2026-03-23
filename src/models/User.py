@@ -11,10 +11,10 @@ class User:
         if not isinstance(name, str) or not name:
             logger.error("Invalid name provided for User initialization.")
             raise ValueError("Name must be a non-empty string")
-        contact_details = ContactDetails(name=name, email=email, phone_number=phone_number, linkedin=linkedin, github=github, other_links=other_links) #TODO 
+        contact_details = ContactDetails(name=name, email=email, phone_number=phone_number, linkedin=linkedin, github=github, other_links=other_links) 
         self.skills = {}
         self.qualifications = {}
-        self.person = Person(name=name, cai_hash="USER.PRIMARY", id="USER.PRIMARY", relation_type="USER", is_reference=False, contact_details=contact_details, comment=None) #TODO
+        self.person = Person(name=name, cai_hash="USER.PRIMARY", id="USER.PRIMARY", relation_type="USER", is_reference=False, contact_details=contact_details, comment=None)
         self.projects = {}
         self.placements = {}
         self.hobbies = {}
@@ -96,7 +96,7 @@ class User:
     def add_skill_link(self, related_d_type:dataclass_type, related_item_id: str, skill_id: str):
         skill: Skill = self.get_item(skill_id, dataclass_type.SKILL) #type: ignore
         if not skill:
-            log_and_raise(logger, logging.ERROR, f"Skill with id {skill_id} not found when trying to link to {related_d_type.value} with id {related_item_id}", SkillNotFoundInUserDict)
+            log_and_raise(logger, logging.ERROR, f"Skill with id {skill_id} not found when trying to link to {related_d_type.value} with id {related_item_id}", SkillNotFoundInUserDict(item_id=skill_id, d_type=dataclass_type.SKILL))
         registry_map = {
             dataclass_type.QUALIFICATION: skill.related_qualifications,
             dataclass_type.PROJECT: skill.related_projects,
@@ -129,4 +129,3 @@ class User:
         return None
 
 
-#TODO check raises of custom exceptions to ensure parameters are passed

@@ -362,5 +362,3 @@ parse_data("data/CV_Resources/AI_Example_data/people.yaml", dataclass_type.PERSO
 
 print("X")
 #endregion
-
-#TODO when a match is found update any null field with existing ones
