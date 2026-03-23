@@ -40,14 +40,10 @@ ____________V_______________________V_______________________V_________
         [COMPLETED]
             PRIOIRTY research Pydantic
             Build text extration from webpage text
-
-        ---
-        [TODO]
-            Build litellm function to support uploading file
             Build tool to get Skills from user object and a format in which the llm likes it being uploaded (maybe pydantic?)
             Build unit test
-            Build flexible verification of responses
-                checking that skills were not halucinated              
+        ---
+        [TODO]              
         ---
 _____________________________________________________________
             |                       |                       |
@@ -55,9 +51,10 @@ _____________________________________________________________
 ____________V_______________________V_______________________V_________
     3. APP cross references skills in response with Skills table
         [COMPLETED]
+            build search function for skills
         ---
         [TODO]
-            build search function for skills
+
         ---
 _________________________________________________________
             |                       |                       |
@@ -65,19 +62,18 @@ _________________________________________________________
 ____________V_______________________V_______________________V_________
     3.1 APP gives Skills objects that match along with titles of placements/projects that are linked       
         [COMPLETED]
+            give each skill/project/placement a unique ID to assist in cross referencing 
+            build tooling to return projects and placements and skills 
         ---
         [TODO]
         ---
-            give each skill/project/placement a unique ID to assist in cross referencing 
-            build tooling to return projects and placements and skills 
+
 _____________________________________________________________________
             |                       |                       |
             |                       |                       |
 ____________V_______________________V_______________________V_________
     3.2 LLM Inject job advert and skills and placements objects and generate a list of CV options
         [COMPLETED]
-        ---
-        [TODO]
             ensure a good data format to limit token use for these prompts
             fine tune the amount of responses/prompts needed
         ---
@@ -90,6 +86,9 @@ ____________V_______________________V_______________________V_________
             Boots Suggestion Prompt:
                 "Select the top 3 projects/placements that best prove the required skills, and write one high-impact achievement bullet for each."
             Return as yaml, docx or pdf
+        ---
+        [TODO]
+
 _____________________________________________________________________
             |                       |                       |
             |                       |                       |
