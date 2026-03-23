@@ -3,6 +3,8 @@ from datetime import date
 from enum import Enum
 from typing import Optional
 
+from src.models.AdvertSourceType import AdvertSourceType
+
 @dataclass
 class Skill:
     name: str
@@ -77,18 +79,19 @@ class Location:
 class AdvertSource:
     source_path: str #url or file path
     sourced_from: str #where this advert was found, e.g. linkedin, company website, etc.
+    source_type: AdvertSourceType
     comment: Optional[str] = None #personal notes about the advert
 @dataclass
 class Advert:
     advert_title: str
     advert_description: str
     source: AdvertSource
-    required_skills: list["Skill"]
-    desired_skills: list["Skill"]
     placement_location: Location
     working_pattern: str #maybe could enum this later, remote,hybrid,flex,shifts etc
     contact_details: ContactDetails
     advertStyle: Enum #e.g. formal, informal, creative, etc. 
+    required_skills: set["Skill"] = field(default_factory=set)
+    desired_skills: set["Skill"] = field(default_factory=set)
 @dataclass
 class Hobby:
     id: str

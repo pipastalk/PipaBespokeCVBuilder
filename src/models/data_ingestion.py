@@ -8,6 +8,7 @@ import phonenumbers
 from email_validator import validate_email, EmailNotValidError
 from urllib.parse import urlparse
 
+from src.models.AdvertSourceType import AdvertSourceType
 from src.exceptions.data_ingestion_exceptions import *
 from src.models.dataclass_type import dataclass_type
 from src.models.schema import *
@@ -341,9 +342,67 @@ def build_contact_details(validated_contact_details) -> ContactDetails:
         other_links=validated_contact_details['other_links'] if 'other_links' in validated_contact_details else None,
     )
     return contact_details
+
+def build_location(validated_location) -> Location:
+    location = Location(
+        city=validated_location['city'],
+        country=validated_location['country'],
+        address=validated_location['address'] if 'address' in validated_location else None,
+        post_or_zip_code=validated_location['post_or_zip_code'] if 'post_or_zip_code' in validated_location else None,
+        gps_coordinates=validated_location['gps_coordinates'] if 'gps_coordinates' in validated_location else None,
+    )
+    return location
 #endregion
 
+#region adverts
+def determine_advert_type(file_path):
+    path = file_path.split(".")
+    if len(path) < 2:
+        msg = f"Unable to determine advert type from file path: {file_path}"
+        log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
+    file_type = path[-1].lower()
+    registry_map = {
+        "pdf": AdvertSourceType.PDF,
+        "html": AdvertSourceType.WEBSITE,
+        "docx": AdvertSourceType.WORD,
+    }
+    advert_type = registry_map.get(file_type)
+    if not advert_type:
+        msg = f"Unsupported advert source type: {file_type}"
+        log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
+    return advert_type
 
+def build_advert_source(validated_advert_source) -> AdvertSource:
+    advert_source = AdvertSource(
+        source_path=validated_advert_source['source_path'],
+        sourced_from=validated_advert_source['sourced_from'],
+        source_type=validated_advert_source['source_type'],
+        comment=validated_advert_source['comment'] if 'comment' in validated_advert_source else None,
+    )
+    return advert_source
+
+def build_advert(validated_advert, user: User) -> Advert:
+    source_data = validated_advert.get('source', {})
+    if not source_data.get('source_type') and source_data.get('source_path'):
+        source_data['source_type'] = determine_advert_type(source_data['source_path'])
+
+    contact_data = validate_data(validated_advert['contact_details'], dataclass_type.CONTACT_DETAILS, user)
+    source = build_advert_source(source_data)
+    placement_location = build_location(validated_advert['placement_location'])
+    advert = Advert(
+        advert_title=validated_advert['advert_title'],
+        advert_description=validated_advert['advert_description'],
+        source=source,
+        placement_location=placement_location,
+        working_pattern=validated_advert['working_pattern'],
+        contact_details=build_contact_details(contact_data),
+        advertStyle=validated_advert['advertStyle'],
+        required_skills=validated_advert['required_skills'] if 'required_skills' in validated_advert else set(),
+        desired_skills=validated_advert['desired_skills'] if 'desired_skills' in validated_advert else set(),
+    )
+    return advert
+    
+#endregion 
 #region scratch testing
 
 example_user = User(
