@@ -24,13 +24,12 @@ ____________________________________________________________________
 ____________V_______________________V_______________________V_________
     1. MANUAL upload of advert
         [COMPLETED]
-        ---
-        [TODO]
             Build advert path ingest
                 determine type (webpage,pdf,docx)
                 convert advert path and put into a yaml file
                     build data structure for this
-            build check if advert has already been applied for
+        ---
+        [TODO]
         ---
 _____________________________________________________________________
             |                       |                       |
@@ -41,6 +40,7 @@ ____________V_______________________V_______________________V_________
         [COMPLETED]
         ---
         [TODO]
+            PRIOIRTY research Pydantic
             Build litellm function to support uploading file
             Build tool to get Skills from user object and a format in which the llm likes it being uploaded (maybe pydantic?)
             Build unit test
@@ -55,7 +55,6 @@ ____________V_______________________V_______________________V_________
         [COMPLETED]
         ---
         [TODO]
-            PRIOIRTY research Pydantic
             build search function for skills
         ---
 _________________________________________________________

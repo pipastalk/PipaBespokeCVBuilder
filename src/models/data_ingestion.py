@@ -72,6 +72,83 @@ def validate_contact_details(data):
         validated_data['other_links'] = validated_other_links
     return validated_data
 
+def validate_location(data):
+    if not data:
+        log_and_raise(logger, logging.ERROR, "no data passed to validate location", ValueError())
+    check_required_fields(dataclass_type.LOCATION, data)
+    validated_data = {
+        'city': data.get('city'),
+        'country': data.get('country'),
+    }
+    optional_fields = ['address', 'post_or_zip_code', 'gps_coordinates']
+    for field in optional_fields:
+        if field in data and data.get(field) is not None:
+            validated_data[field] = data.get(field)
+    return validated_data
+
+def validate_advert_source(data):
+    if not data:
+        log_and_raise(logger, logging.ERROR, "no data passed to validate advert source", ValueError())
+    check_required_fields(dataclass_type.ADVERTSOURCE, data)
+
+    validated_data = {
+        'source_path': data.get('source_path'),
+        'sourced_from': data.get('sourced_from'),
+    }
+
+    source_type = data.get('source_type')
+    if source_type is None:
+        source_type = determine_advert_type(validated_data['source_path'])
+    elif isinstance(source_type, str):
+        registry_map = {
+            'pdf': AdvertSourceType.PDF,
+            'html': AdvertSourceType.WEBSITE,
+            'docx': AdvertSourceType.WORD,
+        }
+        mapped_type = registry_map.get(source_type.lower())
+        if not mapped_type:
+            msg = f"Unsupported advert source type: {source_type}"
+            log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
+        source_type = mapped_type
+    elif not isinstance(source_type, AdvertSourceType):
+        msg = f"Unsupported advert source type value: {source_type}"
+        log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
+
+    validated_data['source_type'] = source_type
+    if data.get('comment') is not None:
+        validated_data['comment'] = data.get('comment')
+    return validated_data
+
+def validate_advert(data):
+    if not data:
+        log_and_raise(logger, logging.ERROR, "no data passed to validate advert", ValueError())
+    check_required_fields(dataclass_type.ADVERT, data)
+
+    validated_data = {
+        'advert_title': data.get('advert_title'),
+        'advert_description': data.get('advert_description'),
+        'working_pattern': data.get('working_pattern'),
+        'advertStyle': data.get('advertStyle'),
+        'source': validate_advert_source(data.get('source')),
+        'placement_location': validate_location(data.get('placement_location')),
+        'contact_details': validate_contact_details(data.get('contact_details')),
+    }
+
+    # Skills are intentionally kept as raw names for later comparison with user skill names.
+    for skill_field in ['required_skills', 'desired_skills']:
+        if skill_field not in data:
+            continue
+        skills = data.get(skill_field)
+        if not isinstance(skills, (list, set, tuple)):
+            msg = f"{skill_field} must be a list, set, or tuple of skill names"
+            log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
+        if not all(isinstance(skill_name, str) for skill_name in skills):
+            msg = f"{skill_field} must contain only skill names as strings"
+            log_and_raise(logger, logging.ERROR, msg, ValueError(msg))
+        validated_data[skill_field] = set(skills)
+
+    return validated_data
+
 def is_valid_url(url):
     try:
         result = urlparse(url)
@@ -81,10 +158,18 @@ def is_valid_url(url):
         return False
 #endregion
 def validate_data(data,d_type:dataclass_type, user: User):
-    if d_type == dataclass_type.CONTACT_DETAILS:
-        validate_contact_details(data)
     if not data:
         log_and_raise(logger, logging.ERROR, "no data passed to validate", ValueError())
+
+    if d_type == dataclass_type.CONTACT_DETAILS:
+        return validate_contact_details(data)
+    if d_type == dataclass_type.LOCATION:
+        return validate_location(data)
+    if d_type == dataclass_type.ADVERTSOURCE:
+        return validate_advert_source(data)
+    if d_type == dataclass_type.ADVERT:
+        return validate_advert(data)
+
     entry_data_hash = build_cai_hash(data)
     result = user.hash_search(entry_data_hash)
     if result:
@@ -158,8 +243,16 @@ def check_required_fields(d_type:dataclass_type, data):
         dataclass_type.PROJECT: ['name', 'description'],
         dataclass_type.PLACEMENT: ['name', 'job_title', 'start_date', 'related_skills'],
         dataclass_type.LOCATION: ['city', 'country'],
-        # TODO dataclass_type.ADVERTSOURCE: [...],
-        # TODO dataclass_type.ADVERT: [...],
+        dataclass_type.ADVERTSOURCE: ['source_path', 'sourced_from'],
+        dataclass_type.ADVERT: [
+            'advert_title',
+            'advert_description',
+            'source',
+            'placement_location',
+            'working_pattern',
+            'contact_details',
+            'advertStyle',
+        ],
         dataclass_type.HOBBY: ['name', 'description'],
     }
     if registry_map.get(d_type) and isinstance(registry_map[d_type], list):
@@ -196,9 +289,9 @@ def parse_data(file_path, d_type: dataclass_type, user: User):
         dataclass_type.PERSON: build_person,
         dataclass_type.PLACEMENT: build_placement,
         dataclass_type.PROJECT: build_project,
-        #TODO dataclass_type.LOCATION: build_location,
-        #TODO dataclass_type.ADVERTSOURCE: build_advert_source,
-        #TODO dataclass_type.ADVERT: build_advert,
+        dataclass_type.LOCATION: build_location,
+        dataclass_type.ADVERTSOURCE: build_advert_source,
+        dataclass_type.ADVERT: build_advert,
         dataclass_type.SKILL: build_skill,
         dataclass_type.QUALIFICATION: build_qualification,
         dataclass_type.HOBBY: build_hobby,
@@ -209,6 +302,8 @@ def parse_data(file_path, d_type: dataclass_type, user: User):
         log_and_raise(logger, logging.ERROR, msg, NotImplementedError(msg))
         return #CRITICAL ERROR raised error should prevent hitting this return
     file_data = read_yaml_file(file_path)
+    built_entries = []
+    non_user_persisted_types = {dataclass_type.LOCATION, dataclass_type.ADVERTSOURCE, dataclass_type.ADVERT}
     for entry in file_data:
         logger.info(f"Parsing {d_type.value} entry: {entry}")
         if not entry:
@@ -218,11 +313,15 @@ def parse_data(file_path, d_type: dataclass_type, user: User):
             validated_data = validate_data(entry, d_type, user)
         except MergedDataException as e:
             continue #Skipping as no need to build the entry, data was existing and merged.
-        if d_type == dataclass_type.PERSON:
+        if d_type in {dataclass_type.PERSON, dataclass_type.ADVERT}:
             finished_entry = build(validated_data, user)
         else:
             finished_entry = build(validated_data)
+        built_entries.append(finished_entry)
+        if d_type in non_user_persisted_types:
+            continue
         user.add_data(finished_entry, d_type) #Keeping add outside of build to allow for single purpose function and easier unit testing
+    return built_entries
 
 def build_cai_hash(data):
     # Convert data to a canonical string (sorted keys for consistency)
